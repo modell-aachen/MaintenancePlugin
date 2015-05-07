@@ -1,0 +1,26 @@
+%META:TOPICPARENT{name="Plugins"}%
+---+ MaintenancePlugin
+
+Q.wiki maintenace plugin.
+---++ MP_LIST
+
+Lists registered checks.
+
+%MP_LIST%
+
+---++ MP_CHECK
+
+If User is admin user and mpcheck=1, check for maintenance problems and list them as a table. %BUTTON{"Check now!" href="%SCRIPTURLPATH{"view"}%/%WEB%.%TOPIC%?mpcheck=1"}%
+
+%MP_CHECK%
+
+---++ Plugin Info
+
+|  Author: | Maik Glatki |
+|  Copyright: | &copy; 2015, Modell Aachen GmbH |
+|  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
+|  Release: | %$RELEASE% |
+|  Version: | %$VERSION% |
+|  Home: | http://www.modell-aachen.de |
+|  Support: | http://www.modell-aachen.de |
+
