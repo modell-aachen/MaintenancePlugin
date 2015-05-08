@@ -96,6 +96,21 @@ my $checks = {
             }
             return $result;
         }
+    },
+    "general: customnowysiwyg" => {
+        name => "Custom web NOWYSIWYG",
+        description => "Custom web has NOWYSIWYG preference",
+        check => sub {
+            my $result = { result => 0 };
+            my $nowysiwyg = Foswiki::Func::getPreferencesValue( "NOWYSIWYG", "Custom" );
+            chomp $nowysiwyg;
+            if ( $nowysiwyg ne '1' ) {
+                $result->{result} = 1;
+                $result->{priority} = WARN;
+                $result->{solution} = "Add '   * Set NOWYSIWYG = 1' to [[Custom.WebPreferences]].";
+            }
+            return $result;
+        }
     }
 };
 
