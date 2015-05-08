@@ -62,7 +62,7 @@ my $checks = {
                     unless ( Foswiki::Func::getPreferencesValue('SKIN') =~ /contextmenu/ ) {
                         $result->{result} = 1;
                         $result->{priority} = ERROR;
-                        $result->{solution} = "Add contextmenu to SKIN in Main/SitePreferences";
+                        $result->{solution} = "Add contextmenu to SKIN in [[Main.SitePreferences]]";
                     }
             }
             return $result;
@@ -77,6 +77,22 @@ my $checks = {
                 $result->{result} = 1;
                 $result->{priority} = WARN;
                 $result->{solution} = "Set {ReplaceIfEditedAgainWithin} to 0";
+            }
+            return $result;
+        }
+    },
+    "general: actiontrackersiteprefs" => {
+        name => "Actiontracker site preferences",
+        description => "ACTIONTRACKERPLUGIN_UPDATEAJAX set in SitePreferences",
+        check => sub {
+            my $result = { result => 0 };
+            if ( ( exists $Foswiki::cfg{Plugins}{ActionTrackerPlugin}{Enabled} ) and ( $Foswiki::cfg{Plugins}{ActionTrackerPlugin}{Enabled} ) ) {
+                my ( $spmeta, $sp ) = Foswiki::Func::readTopic( 'Main', 'SitePreferences');
+                if ( $spmeta->getPreference( "ACTIONTRACKERPLUGIN_UPDATEAJAX" ) ne '1' ) {
+                    $result->{result} = 1;
+                    $result->{priority} = ERROR;
+                    $result->{solution} = "Add '   * Set ACTIONTRACKERPLUGIN_UPDATEAJAX = 1' to [[Main.SitePreferences]].";
+                }
             }
             return $result;
         }
