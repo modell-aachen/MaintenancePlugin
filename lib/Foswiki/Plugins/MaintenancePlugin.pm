@@ -157,7 +157,21 @@ my $checks = {
             }
             return $result;
         }
-    }
+    },
+    "general: GroupViewTemplate" => {
+        name => "GroupViewTemplate up to date",
+        description => "GroupViewTemplate has redirect and autocomplete",
+        check => sub {
+            my $result = { result => 0 };
+            my ( $gvmeta, $gv ) = Foswiki::Func::readTopic( 'Main', 'GroupViewTemplate' );
+            unless ( ( $gv =~ /USERAUTOCOMPLETE/ ) && ( $gv =~ /redirectto" value="%BASEWEB%\.%BASETOPIC%/ ) ) {
+                    $result->{result} = 1;
+                    $result->{priority} = ERROR;
+                    $result->{solution} = "Update [[Main.GroupViewTemplate]] manually from QwikiContrib.";
+            }
+            return $result;
+        }
+    },
 };
 
 sub initPlugin {
