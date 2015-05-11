@@ -8,8 +8,8 @@ use warnings;
 use Foswiki::Func ();
 use Foswiki::Plugins ();
 
-our $VERSION = '0.1';
-our $RELEASE = "0.1";
+our $VERSION = '0.2';
+our $RELEASE = "0.2";
 our $SHORTDESCRIPTION = 'Q.wiki maintenance plugin';
 our $NO_PREFS_IN_TOPIC = 1;
 
@@ -91,7 +91,7 @@ my $checks = {
                 if ( $spmeta->getPreference( "ACTIONTRACKERPLUGIN_UPDATEAJAX" ) ne '1' ) {
                     $result->{result} = 1;
                     $result->{priority} = ERROR;
-                    $result->{solution} = "Add '   * Set ACTIONTRACKERPLUGIN_UPDATEAJAX = 1' to [[Main.SitePreferences]].";
+                    $result->{solution} = "Add '   * Set ACTIONTRACKERPLUGIN_UPDATEAJAX = 1' to [[Main.SitePreferences]]";
                 }
             }
             return $result;
@@ -107,7 +107,7 @@ my $checks = {
             if ( $nowysiwyg ne '1' ) {
                 $result->{result} = 1;
                 $result->{priority} = WARN;
-                $result->{solution} = "Add '   * Set NOWYSIWYG = 1' to [[Custom.WebPreferences]].";
+                $result->{solution} = "Add '   * Set NOWYSIWYG = 1' to [[Custom.WebPreferences]]";
             }
             return $result;
         }
@@ -167,7 +167,7 @@ my $checks = {
             unless ( ( $gv =~ /USERAUTOCOMPLETE/ ) && ( $gv =~ /redirectto" value="%BASEWEB%\.%BASETOPIC%/ ) ) {
                     $result->{result} = 1;
                     $result->{priority} = ERROR;
-                    $result->{solution} = "Update [[Main.GroupViewTemplate]] manually from QwikiContrib.";
+                    $result->{solution} = "Update [[Main.GroupViewTemplate]] manually from QwikiContrib";
             }
             return $result;
         }
@@ -192,7 +192,7 @@ my $checks = {
             if ( $topic eq '' ) {
                 $result->{result} = 1;
                 $result->{priority} = WARN;
-                $result->{solution} = "Could not find responsibilites topic. Find and check manually if it lists only correct topics.";
+                $result->{solution} = "Could not find responsibilites topic. Find and check manually if it lists only correct topics";
             } else {
                 # Check topic
                 my ( $tmeta, $tv ) = Foswiki::Func::readTopic( $web, $topic );
@@ -200,7 +200,7 @@ my $checks = {
                 unless ( $tv =~ /-topic:\(\*Template OR \*Talk OR \*TALK OR \*Form OR NormClassification\*\)/ ) {
                         $result->{result} = 1;
                         $result->{priority} = WARN;
-                        $result->{solution} = "Update [[$web.$topic]] manually to exclude unwanted topics from results.";
+                        $result->{solution} = "Update [[$web.$topic]] manually to exclude unwanted topics from results";
                 }
             }
             return $result;
@@ -225,19 +225,14 @@ sub initPlugin {
     return 1;
 }
 
+# This can be used to override existing checks or add new ones.
 sub registerCheck {
     my ( $name, $newcheck, @bad ) = @_;
     if ( @bad ) {
         Foswiki::Func::writeWarning( "Wrong number of arguments in " . (caller(0))[3] );
         return 0;
     }
-    if ( exists $checks->{ $name } ) {
-        Foswiki::Func::writeWarning( "Check with name $name already registered" );
-        return 0;
-    } else {
-        $checks->{ $name } = $newcheck;
-        return 1;
-    }
+    $checks->{ $name } = $newcheck;
 }
 
 sub tagList {
