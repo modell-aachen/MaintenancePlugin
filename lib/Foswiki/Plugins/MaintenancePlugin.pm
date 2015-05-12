@@ -205,6 +205,20 @@ my $checks = {
             }
             return $result;
         }
+    },
+    "general: userautocomplete set" => {
+        name => "User autocomplete configuration",
+        description => "USERAUTOCOMPLETE set in SitePreferences",
+        check => sub {
+            my $result = { result => 0 };
+            my ( $spmeta, $sp ) = Foswiki::Func::readTopic( 'Main', 'SitePreferences');
+            if ( $spmeta->getPreference( "USERAUTOCOMPLETE" ) eq '' ) {
+                $result->{result} = 1;
+                $result->{priority} = CRITICAL;
+                $result->{solution} = "Add USERAUTOCOMPLETE setting to [[Main.SitePreferences]] according to documentation";
+            }
+            return $result;
+        }
     }
 };
 
