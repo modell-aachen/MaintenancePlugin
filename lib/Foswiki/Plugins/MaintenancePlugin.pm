@@ -218,6 +218,32 @@ my $checks = {
             }
             return $result;
         }
+    },
+    "general:locales" => {
+        name => "Locale directories",
+        description => "Directories without System topic in locales dir.",
+        check => sub {
+            my $fail = 1;
+            my $result = { result => 0 };
+            my @unknowns = ();
+            opendir( my $localedh, $Foswiki::cfg{LocalesDir} ) or push(@unknowns, "Could not open locale dir" );
+            if ( scalar @unknowns == 0) {
+                my @dirs = readdir( $localedh );
+                # check dirs for existing contribs
+                foreach my $res ( @dirs ) {
+                    unless ( ( $res =~ /(^\.)|(^\.\.)|(\.po)|(^Foswiki\.pot)|(^ZZCustom)|(^Foswiki)$/ ) || ( Foswiki::Func::topicExists( "System", $res ) ) ) {
+                        push( @unknowns, $res );
+                    }
+                }
+                closedir $localedh;
+            }
+            if ( scalar @unknowns > 0 ) {
+                $result->{result} = 1;
+                $result->{priority} = WARN;
+                $result->{solution} = "Check locale direcories. If need be, merge custom localizations into subdirecory \"ZZCustom\". Offending directories: " . join( ", ", @unknowns );
+            }
+            return $result;
+        }
     }
 };
 
