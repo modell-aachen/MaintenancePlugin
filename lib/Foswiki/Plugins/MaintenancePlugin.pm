@@ -1,5 +1,4 @@
 # See bottom of file for default license and copyright information
-
 package Foswiki::Plugins::MaintenancePlugin;
 
 use strict;
@@ -18,14 +17,14 @@ use constant CRITICAL => 0;
 use constant ERROR => 1;
 use constant WARN => 2;
 
-
 my $checks = {
-    "general: kvp talk" => {
+    "kvp:talk" => {
         name => "KVP Talk Suffix",
         description => "Check if KVPPlugin suffix is \"Talk\"",
         check => sub {
             my $result = { result => 0 };
             if ( ( exists $Foswiki::cfg{Plugins}{KVPPlugin}{Enabled} ) and ( $Foswiki::cfg{Plugins}{KVPPlugin}{Enabled} ) ) {
+                # TODO check for Topics with old "Talk" suffix here
                 if ( $Foswiki::cfg{Extensions}{KVPPlugin}{suffix} ne 'TALK' ) {
                     $result->{result} = 1;
                     $result->{priority} = WARN;
@@ -35,7 +34,7 @@ my $checks = {
             return $result;
         }
     },
-    "general: ldap refresh" => {
+    "ldapcontrib:refresh" => {
         name => "LDAP refresh enabled",
         description => "Check if a cronjob with refreshldap=on exists",
         check => sub {
@@ -53,7 +52,7 @@ my $checks = {
             return $result;
         }
     },
-    "general: contextmenu skin" => {
+    "modaccontextmenu:skin" => {
         name => "SKIN preference has \"contextmenu\"",
         description => "Check if modaccontextmenu enabled in SKIN preference",
         check => sub {
@@ -68,7 +67,7 @@ my $checks = {
             return $result;
         }
     },
-    "general: replaceifeditedagainwithin" => {
+    "general:replaceifeditedagainwithin" => {
         name => "ReplaceIfEditedAgainWithin set correctly",
         description => "{ReplaceIfEditedAgainWithin} set to 0",
         check => sub {
@@ -81,7 +80,7 @@ my $checks = {
             return $result;
         }
     },
-    "general: actiontrackersiteprefs" => {
+    "actiontrackerplugin:sitepreferences" => {
         name => "Actiontracker site preferences",
         description => "ACTIONTRACKERPLUGIN_UPDATEAJAX set in SitePreferences",
         check => sub {
@@ -97,7 +96,7 @@ my $checks = {
             return $result;
         }
     },
-    "general: customnowysiwyg" => {
+    "general:customnowysiwyg" => {
         name => "Custom web NOWYSIWYG",
         description => "Custom web has NOWYSIWYG preference",
         check => sub {
@@ -112,7 +111,7 @@ my $checks = {
             return $result;
         }
     },
-    "general: customskins" => {
+    "general:customskins" => {
         name => "Custom web skins",
         description => "Custom web has only CustomSkins",
         check => sub {
@@ -126,9 +125,9 @@ my $checks = {
             return $result;
         }
     },
-    "general: filepermissions" => {
+    "general:filepermissions" => {
         name => "File permissions",
-        description => "Some files has wrong permissions",
+        description => "File permissions incorrect",
         check => sub {
             my $result = { result => 0 };
             # Core module
@@ -152,13 +151,13 @@ my $checks = {
                 $result->{result} = 1;
                 $result->{priority} = ERROR;
                 $result->{solution} = "There exist " . scalar @offenders . " files and directories with wrong permissions.<br>" . join("<br>", @offenders);
-                my $help = '<br>Try one of these commands:<br><pre>    chown -R www-data:www-data .<br>    find -type d -exec chmod 755 {} \;<br>    chmod -R u+w *<br>    find . -type f -name "*,v" -exec chmod 444 {} \;</pre>';
+                my $help = '<br>Try one of these commands in the foswiki directory:<br><pre>    chown -R www-data:www-data .<br>    find -type d -exec chmod 755 {} \;<br>    chmod -R u+w *<br>    find . -type f -name "*,v" -exec chmod 444 {} \;</pre>';
                 $result->{solution} .= $help;
             }
             return $result;
         }
     },
-    "general: GroupViewTemplate" => {
+    "general:groupviewtemplate" => {
         name => "GroupViewTemplate outdated",
         description => "GroupViewTemplate has redirect and autocomplete",
         check => sub {
@@ -172,7 +171,7 @@ my $checks = {
             return $result;
         }
     },
-    "general: Responsibilities" => {
+    "processescontentcontrib:responsibilities" => {
         name => "Responsibilities outdated",
         description => "Responsibilites topic search is outdated",
         check => sub {
@@ -206,7 +205,7 @@ my $checks = {
             return $result;
         }
     },
-    "general: userautocomplete set" => {
+    "general:userautocomplete" => {
         name => "User autocomplete configuration",
         description => "USERAUTOCOMPLETE set in SitePreferences",
         check => sub {
@@ -239,7 +238,7 @@ sub initPlugin {
     return 1;
 }
 
-# This can be used to override existing checks or add new ones.
+# This can be used to override existing checks or to add new ones.
 sub registerCheck {
     my ( $name, $newcheck, @bad ) = @_;
     if ( @bad ) {
@@ -282,7 +281,7 @@ sub tagCheck {
         if ( $problems > 0 ) {
             $result = "| *Prio* | *Name* | *Description* | *Solution* |\n";
             for my $prio ( sort keys $warnings ) {
-                $result .= join("", @{$warnings->{$prio}});
+                $result .= join( "", @{$warnings->{$prio}} );
             }
         } else {
             $result .= " | No problems detected. Everything is awesome ||||\n";
@@ -292,29 +291,6 @@ sub tagCheck {
     }
     return $result;
 }
-
-# The function used to handle the %EXAMPLETAG{...}% macro
-# You would have one of these for each macro you want to process.
-#sub _EXAMPLETAG {
-#    my($session, $params, $topic, $web, $topicObject) = @_;
-#    # $session  - a reference to the Foswiki session object
-#    #             (you probably won't need it, but documented in Foswiki.pm)
-#    # $params=  - a reference to a Foswiki::Attrs object containing
-#    #             parameters.
-#    #             This can be used as a simple hash that maps parameter names
-#    #             to values, with _DEFAULT being the name for the default
-#    #             (unnamed) parameter.
-#    # $topic    - name of the topic in the query
-#    # $web      - name of the web in the query
-#    # $topicObject - a reference to a Foswiki::Meta object containing the
-#    #             topic the macro is being rendered in (new for foswiki 1.1.x)
-#    # Return: the result of processing the macro. This will replace the
-#    # macro call in the final text.
-#
-#    # For example, %EXAMPLETAG{'hamburger' sideorder="onions"}%
-#    # $params->{_DEFAULT} will be 'hamburger'
-#    # $params->{sideorder} will be 'onions'
-#}
 
 1;
 
