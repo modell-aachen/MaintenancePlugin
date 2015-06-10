@@ -223,7 +223,6 @@ my $checks = {
         name => "Locale directories",
         description => "Directories without System topic in locales dir.",
         check => sub {
-            my $fail = 1;
             my $result = { result => 0 };
             my @unknowns = ();
             opendir( my $localedh, $Foswiki::cfg{LocalesDir} ) or push(@unknowns, "Could not open locale dir" );
