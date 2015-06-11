@@ -243,6 +243,20 @@ my $checks = {
             }
             return $result;
         }
+    },
+    "general:release" => {
+        name => "Foswiki release",
+        description => "Installed Foswiki release is not newest supported stable version.",
+        check => sub {
+            my $result = { result => 0 };
+            my $last = 'Foswiki-1.1.9';
+            if ( $Foswiki::RELEASE ne $last ) {
+                $result->{result} = 1;
+                $result->{priority} = WARN;
+                $result->{solution} = "Update Foswiki to $last.";
+            }
+            return $result;
+        }
     }
 };
 
