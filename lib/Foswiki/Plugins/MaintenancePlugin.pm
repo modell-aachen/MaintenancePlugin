@@ -276,7 +276,7 @@ sub registerCheck {
 sub tagList {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
     my $result = "| *Check* | *Description* |\n";
-    for my $check ( keys $checks ) {
+    for my $check ( keys %$checks ) {
         $result .= '| ' . $checks->{$check}->{name} . ' | ' . $checks->{$check}->{description}  . " |\n";
     }
     return $result;
@@ -290,7 +290,7 @@ sub tagCheck {
     if ( ( Foswiki::Func::isAnAdmin() ) and ( CGI::param( 'mpcheck' ) ) ) {
         my $problems = 0;
         my $warnings = {};
-        for my $check ( keys $checks ) {
+        for my $check ( keys %$checks ) {
             my $res = $checks->{$check}->{check}();
             if ( $res->{result} ) {
                 $problems++;
@@ -305,7 +305,7 @@ sub tagCheck {
         }
         if ( $problems > 0 ) {
             $result = "| *Prio* | *Name* | *Description* | *Solution* |\n";
-            for my $prio ( sort keys $warnings ) {
+            for my $prio ( sort keys %$warnings ) {
                 $result .= join( "", @{$warnings->{$prio}} );
             }
         } else {
