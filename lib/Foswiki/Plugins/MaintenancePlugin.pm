@@ -223,7 +223,6 @@ my $checks = {
         name => "Locale directories",
         description => "Directories without System topic in locales dir.",
         check => sub {
-            my $fail = 1;
             my $result = { result => 0 };
             my @unknowns = ();
             opendir( my $localedh, $Foswiki::cfg{LocalesDir} ) or push(@unknowns, "Could not open locale dir" );
@@ -241,6 +240,20 @@ my $checks = {
                 $result->{result} = 1;
                 $result->{priority} = WARN;
                 $result->{solution} = "Check locale direcories. If need be, merge custom localizations into subdirecory \"ZZCustom\". Offending directories: " . join( ", ", @unknowns );
+            }
+            return $result;
+        }
+    },
+    "general:release" => {
+        name => "Foswiki release",
+        description => "Installed Foswiki release is not newest supported stable version.",
+        check => sub {
+            my $result = { result => 0 };
+            my $last = 'Foswiki-1.1.9';
+            if ( $Foswiki::RELEASE ne $last ) {
+                $result->{result} = 1;
+                $result->{priority} = WARN;
+                $result->{solution} = "Update Foswiki to $last.";
             }
             return $result;
         }
@@ -277,7 +290,7 @@ sub registerCheck {
 sub tagList {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
     my $result = "| *Check* | *Description* |\n";
-    for my $check ( keys $checks ) {
+    for my $check ( keys %$checks ) {
         $result .= '| ' . $checks->{$check}->{name} . ' | ' . $checks->{$check}->{description}  . " |\n";
     }
     return $result;
@@ -291,7 +304,7 @@ sub tagCheck {
     if ( ( Foswiki::Func::isAnAdmin() ) and ( CGI::param( 'mpcheck' ) ) ) {
         my $problems = 0;
         my $warnings = {};
-        for my $check ( keys $checks ) {
+        for my $check ( keys %$checks ) {
             my $res = $checks->{$check}->{check}();
             if ( $res->{result} ) {
                 $problems++;
@@ -306,7 +319,7 @@ sub tagCheck {
         }
         if ( $problems > 0 ) {
             $result = "| *Prio* | *Name* | *Description* | *Solution* |\n";
-            for my $prio ( sort keys $warnings ) {
+            for my $prio ( sort keys %$warnings ) {
                 $result .= join( "", @{$warnings->{$prio}} );
             }
         } else {
