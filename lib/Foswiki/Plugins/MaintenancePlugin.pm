@@ -7,6 +7,9 @@ use warnings;
 use Foswiki::Func ();
 use Foswiki::Plugins ();
 
+# Core modules
+use File::Spec; # Needed for portable checking of PATH
+
 our $VERSION = '0.2';
 our $RELEASE = "0.2";
 our $SHORTDESCRIPTION = 'Q.wiki maintenance plugin';
@@ -254,6 +257,45 @@ my $checks = {
                 $result->{result} = 1;
                 $result->{priority} = WARN;
                 $result->{solution} = "Update Foswiki to $last.";
+            }
+            return $result;
+        }
+    },
+    # FIXME this is most likely not portable to non linux systems
+    "general:stringifiercontrib:commands" => {
+        name => "Stringifier command validity",
+        description => "One or more necessary stringifier commands appear to be nonfunctional.",
+        check => sub {
+            my $result = { result => 0 };
+            if ( my @cmds = keys($Foswiki::cfg{StringifierContrib}) ) {
+                my $indexer = $Foswiki::cfg{StringifierContrib}{WordIndexer};
+                my @offenders = ();
+                my @path = ('');
+                push @path, File::Spec->path();
+                for my $cmd ( @cmds ) {
+                    if ( $cmd =~ /Cmd$/ ) {
+                        # Do not check unused word indexers.
+                        if ( ( ( $indexer eq 'wv' ) && ( $cmd =~ /^(abiwordCmd)|(antiwordCmd)$/) )
+                            or ( ( $indexer eq 'antiword' ) && ( $cmd =~ /^(abiwordCmd)|(wvTextCmd)$/ ) )
+                            or ( ( $indexer eq 'abiword'  ) && ( $cmd =~ /^(antiwordCmd)|(wvTextCmd)$/ ) ) ) {
+                            next;
+                        }
+                        # Omit parameters
+                        my $executable = ( split( / /, $Foswiki::cfg{StringifierContrib}{$cmd} ) )[0];
+                        my $found = 0;
+                        for my $check ( map { File::Spec->catfile( $_, $executable ) } @path ) {
+                            if ( -x $check ) { $found = 1; last; }
+                        }
+                        unless ( $found ) {
+                            push @offenders, "{StringifierContrib}{$cmd}";
+                        }
+                    }
+                }
+                if ( scalar @offenders > 0 ) {
+                        $result->{result} = 1;
+                        $result->{priority} = ERROR;
+                        $result->{solution} = "Check the following StringifierContrib commands: " . join( ', ', @offenders ) . ".";
+                }
             }
             return $result;
         }
