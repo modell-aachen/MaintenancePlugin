@@ -267,7 +267,7 @@ my $checks = {
         description => "One or more necessary stringifier commands appear to be nonfunctional.",
         check => sub {
             my $result = { result => 0 };
-            if ( my @cmds = keys($Foswiki::cfg{StringifierContrib}) ) {
+            if ( my @cmds = keys( %{$Foswiki::cfg{StringifierContrib}} ) ) {
                 my $indexer = $Foswiki::cfg{StringifierContrib}{WordIndexer};
                 my @offenders = ();
                 my @path = ('');
