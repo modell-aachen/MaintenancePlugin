@@ -7,8 +7,11 @@ use warnings;
 use Foswiki::Func ();
 use Foswiki::Plugins ();
 
-our $VERSION = '0.2';
-our $RELEASE = "0.2";
+# Core modules
+use File::Spec; # Needed for portable checking of PATH
+
+our $VERSION = '0.3';
+our $RELEASE = "0.3";
 our $SHORTDESCRIPTION = 'Q.wiki maintenance plugin';
 our $NO_PREFS_IN_TOPIC = 1;
 
@@ -155,7 +158,8 @@ my $checks = {
                 $result->{solution} .= $help;
             }
             return $result;
-        }
+        },
+        experimental => 1
     },
     "general:groupviewtemplate" => {
         name => "GroupViewTemplate outdated",
@@ -253,7 +257,46 @@ my $checks = {
             if ( $Foswiki::RELEASE ne $last ) {
                 $result->{result} = 1;
                 $result->{priority} = WARN;
-                $result->{solution} = "Update Foswiki to $last.";
+                $result->{solution} = "Update Foswiki to $last. I am very sorry.";
+            }
+            return $result;
+        }
+    },
+    # FIXME this is most likely not portable to non linux systems, or 2.4 linux systems.
+    "general:stringifiercontrib:commands" => {
+        name => "Stringifier command validity",
+        description => "One or more necessary stringifier commands appear to be nonfunctional.",
+        check => sub {
+            my $result = { result => 0 };
+            if ( my @cmds = keys( %{$Foswiki::cfg{StringifierContrib}} ) ) {
+                my $indexer = $Foswiki::cfg{StringifierContrib}{WordIndexer};
+                my @offenders = ();
+                my @path = ('');
+                push @path, File::Spec->path();
+                for my $cmd ( @cmds ) {
+                    if ( $cmd =~ /Cmd$/ ) {
+                        # Do not check unused word indexers.
+                        if ( ( ( $indexer eq 'wv' ) && ( $cmd =~ /^(abiwordCmd)|(antiwordCmd)$/) )
+                            or ( ( $indexer eq 'antiword' ) && ( $cmd =~ /^(abiwordCmd)|(wvTextCmd)$/ ) )
+                            or ( ( $indexer eq 'abiword'  ) && ( $cmd =~ /^(antiwordCmd)|(wvTextCmd)$/ ) ) ) {
+                            next;
+                        }
+                        # Omit parameters
+                        my $executable = ( split( / /, $Foswiki::cfg{StringifierContrib}{$cmd} ) )[0];
+                        my $found = 0;
+                        for my $check ( map { File::Spec->catfile( $_, $executable ) } @path ) {
+                            if ( -x $check ) { $found = 1; last; }
+                        }
+                        unless ( $found ) {
+                            push @offenders, "{StringifierContrib}{$cmd}";
+                        }
+                    }
+                }
+                if ( scalar @offenders > 0 ) {
+                        $result->{result} = 1;
+                        $result->{priority} = ERROR;
+                        $result->{solution} = "Check the following StringifierContrib commands: " . join( ', ', @offenders ) . ".";
+                }
             }
             return $result;
         }
@@ -301,20 +344,23 @@ sub tagCheck {
 
     my $result;
     # Allow only for AdminUser
-    if ( ( Foswiki::Func::isAnAdmin() ) and ( CGI::param( 'mpcheck' ) ) ) {
+    if ((Foswiki::Func::isAnAdmin()) and (CGI::param('mpcheck'))) {
         my $problems = 0;
         my $warnings = {};
         for my $check ( keys %$checks ) {
-            my $res = $checks->{$check}->{check}();
-            if ( $res->{result} ) {
-                $problems++;
-                my $prio =  $res->{priority};
-                my ( $COLOR, $ENDCOLOR ) = ( '', '' );
-                if ( $prio < ERROR ) { $ENDCOLOR = '%ENDCOLOR%'; }
-                if ( $prio == CRITICAL ) { $COLOR = '%RED%'; }
-                if ( $prio == ERROR ) { $COLOR = '%ORANGE%'; }
-                unless ( exists $warnings->{$prio} ) { $warnings->{$prio} = []; }
-                push( @{$warnings->{$prio}}, "| $COLOR$prio$ENDCOLOR | $COLOR" . $checks->{$check}->{name} . "$ENDCOLOR | " .  $checks->{$check}->{description} . ' | ' . $res->{solution} . " |\n" );
+            # Exclude experimental checks, if mpcheck=safe
+            unless ((CGI::param('mpcheck') eq 'safe') && ( exists $checks->{$check}->{experimental})) {
+                my $res = $checks->{$check}->{check}();
+                if ( $res->{result} ) {
+                    $problems++;
+                    my $prio =  $res->{priority};
+                    my ( $COLOR, $ENDCOLOR ) = ( '', '' );
+                    if ( $prio < ERROR ) { $ENDCOLOR = '%ENDCOLOR%'; }
+                    if ( $prio == CRITICAL ) { $COLOR = '%RED%'; }
+                    if ( $prio == ERROR ) { $COLOR = '%ORANGE%'; }
+                    unless ( exists $warnings->{$prio} ) { $warnings->{$prio} = []; }
+                    push( @{$warnings->{$prio}}, "| $COLOR$prio$ENDCOLOR | $COLOR" . $checks->{$check}->{name} . "$ENDCOLOR | " .  $checks->{$check}->{description} . ' | ' . $res->{solution} . " |\n" );
+                }
             }
         }
         if ( $problems > 0 ) {
@@ -326,7 +372,7 @@ sub tagCheck {
             $result .= " | No problems detected. Everything is awesome ||||\n";
         }
     } else {
-        $result = 'MP_CHECK only allowed for admins and in use with mpcheck=1. ';
+        $result = 'MP_CHECK only allowed for admins and in use with http get mpcheck set. ';
     }
     return $result;
 }
