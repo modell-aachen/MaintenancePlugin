@@ -284,6 +284,10 @@ my $checks = {
                         # Omit parameters
                         my $executable = ( split( / /, $Foswiki::cfg{StringifierContrib}{$cmd} ) )[0];
                         my $found = 0;
+                        # check local dir, then PATH
+                        if ( $executable =~ /^\./ ) {
+                            if ( -x $executable ) { $found = 1; last; }
+                        }
                         for my $check ( map { File::Spec->catfile( $_, $executable ) } @path ) {
                             if ( -x $check ) { $found = 1; last; }
                         }
@@ -299,7 +303,8 @@ my $checks = {
                 }
             }
             return $result;
-        }
+        },
+        experimental => 1
     }
 };
 
