@@ -106,6 +106,8 @@ my $checks = {
             my $result = { result => 0 };
             my $nowysiwyg = Foswiki::Func::getPreferencesValue( "NOWYSIWYG", "Custom" );
             chomp $nowysiwyg;
+            $nowysiwyg =~ s/\s+$//;
+            $nowysiwyg =~ s/^\s+//;
             if ( $nowysiwyg ne '1' ) {
                 $result->{result} = 1;
                 $result->{priority} = WARN;
