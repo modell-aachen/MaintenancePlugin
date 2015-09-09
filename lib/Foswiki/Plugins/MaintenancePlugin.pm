@@ -306,7 +306,7 @@ my $checks = {
             }
             return $result;
         },
-        experimental => 1
+        experimental => 0
     }
 };
 
@@ -319,7 +319,6 @@ sub initPlugin {
             __PACKAGE__, ' and Plugins.pm' );
         return 0;
     }
-
     Foswiki::Func::registerTagHandler( 'MP_LIST', \&tagList );
     Foswiki::Func::registerTagHandler( 'MP_CHECK', \&tagCheck );
 
