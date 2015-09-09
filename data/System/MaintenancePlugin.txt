@@ -13,7 +13,16 @@ Lists registered checks.
 If User is admin user and mpcheck=1, check for maintenance problems and list them as a table. %BUTTON{"Check now!" href="%SCRIPTURLPATH{"view"}%/%WEB%.%TOPIC%?mpcheck=1"}%
 
 %MP_CHECK%
----++ API version 3
+
+---++  Restrictions / Known Bugs
+
+   * The file permission check is experimental. If it runs into files containing characters not in the locale-defined \w, such as german umlauts, the resulting search with File::Find will taint the result, which will cause the check to fail. Since we can not really change File::Grep's unicode settings, we suggest moving using the rename functionality to rename the page and change all incoming links. Will be automated soonish. Sorry.%BR%%BUTTON{"Check excluding experimental checks" href="%SCRIPTURLPATH{"view"}%/%WEB%.%TOPIC%?mpcheck=safe"}%
+
+---++ API version 4
+
+---+++ Maintenance.pm (experimental)
+
+The MaintenancePlugin includes every perl module named "Maintenance.pm" in a Contrib and Plugin direcories during checks. This allows for registering checks with the MaintenancePlugin in Contribs and without polluting your regular plugin namespace. Use reponsibly.
 
 ---+++ registerCheck( $name, $newcheck )
 You can use the registerCheck API to add your own checks to the MaintenancePlugin.
@@ -27,7 +36,7 @@ You can use the registerCheck API to add your own checks to the MaintenancePlugi
             * =0= - CRITICAL
             * =1= - ERROR
             * =2= - WARNING
-         * =solutiony= - mandatory if =result= is not =0=. Text containgin information on how to solve the problem.
+         * =solution= - mandatory if =result= is not =0=. Text containing information on how to solve the problem.
       * =experimental - , optional
 
 *Example*
@@ -48,10 +57,6 @@ registerCheck( "general:replaceifeditedagainwithin", {
 );
 </verbatim>
 
----++  Restrictions / Known Bugs
-
-   * The file permission check is experimental. If it runs into files containing characters not in the locale-defined \w, such as german umlauts, the resulting search with File::Find will taint the result, which will cause the check to fail. Since we can not really change File::Grep's unicode settings, we suggest moving using the rename functionality to rename the page and change all incoming links. Will be automated soonish. Sorry. %BUTTON{"Check excluding experimental checks" href="%SCRIPTURLPATH{"view"}%/%WEB%.%TOPIC%?mpcheck=safe"}%
-
 ---++ Plugin Info
 
 |  Author: | Maik Glatki |
@@ -61,6 +66,7 @@ registerCheck( "general:replaceifeditedagainwithin", {
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions in reverse order --> |
 |  0.3 | Added optional experimental tag to checks. Changed API version to 3. |
+|  0.4 | Added experimental Maintenance.pm inclusion. Changed API version to 4.%BR%Removed distinctivly useless check for templates in Custom web.%BR% Improved documentation. |
 |  CPAN Dependencies | None |
 |  Home | http://www.modell-aachen.de |
 |  Feedback | glatki(at)modell-aachen(dot)de |
