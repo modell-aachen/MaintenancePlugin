@@ -291,7 +291,14 @@ sub _collectChecks {
             my $requirePath = File::Spec->catfile($moduleDir, 'Maintenance.pm');
             if ( -d $moduleDir and -f $requirePath) {
                 $requirePath = Foswiki::Sandbox::untaintUnchecked($requirePath);
+                # #FIXME: Technically, there could be anything in this file. Do we prevent that, or will we assume that the lib namespace is safe?
                 require(File::Spec->catfile($requirePath));
+                # Module is required, now check if it has a $maintain scalar that evaluates to true
+                {
+                    no strict 'refs';
+                    my $modstr = 'Foswiki::' . $type . '::' . substr($pm, 0, -3) . '::Maintenance';
+                    if (${$modstr . '::maintain'}) { &{$modstr . '::maintain'}; }
+                }
             }
         }
     }
