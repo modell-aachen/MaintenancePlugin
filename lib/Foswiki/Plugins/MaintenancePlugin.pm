@@ -281,7 +281,7 @@ sub initPlugin {
 
 # This sub is used to collect Maintenance.pm
 sub _collectChecks {
-    for my $type qw(Plugins Contrib) {
+    for my $type (qw(Plugins Contrib)) {
         my  $typeDir = File::Spec->catdir($Foswiki::cfg{ScriptDir},'..','lib','Foswiki', $type);
         opendir(my $dh, $typeDir) or die "Cannot open directory: $!";
         my @modules = sort grep {/.pm$/} readdir($dh);
