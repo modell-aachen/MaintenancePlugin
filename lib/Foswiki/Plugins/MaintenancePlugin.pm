@@ -10,8 +10,8 @@ use Foswiki::Plugins ();
 # Core modules
 use File::Spec; # Needed for portable checking of PATH
 
-our $VERSION = '0.4';
-our $RELEASE = "0.4";
+our $VERSION = '0.6';
+our $RELEASE = "0.6";
 our $SHORTDESCRIPTION = 'Q.wiki maintenance plugin';
 our $NO_PREFS_IN_TOPIC = 1;
 
@@ -20,7 +20,7 @@ use constant CRITICAL => 0;
 use constant ERROR => 1;
 use constant WARN => 2;
 
-my $checks = {
+our $checks = {
     "kvp:talk" => {
         name => "KVP Talk Suffix",
         description => "Check if KVPPlugin suffix is \"Talk\"",
@@ -203,20 +203,6 @@ my $checks = {
             return $result;
         }
     },
-    "general:release" => {
-        name => "Foswiki release",
-        description => "Installed Foswiki release is not newest supported stable version.",
-        check => sub {
-            my $result = { result => 0 };
-            my $last = 'Foswiki-1.1.9';
-            if ( $Foswiki::RELEASE ne $last ) {
-                $result->{result} = 1;
-                $result->{priority} = WARN;
-                $result->{solution} = "Update Foswiki to $last. I am very sorry.";
-            }
-            return $result;
-        }
-    },
     # FIXME this is most likely not portable to non linux systems, or 2.4 linux systems.
     "general:stringifiercontrib:commands" => {
         name => "Stringifier command validity",
@@ -263,6 +249,44 @@ my $checks = {
     }
 };
 
+
+## Helper ##
+
+# This sub is used to collect Maintenance.pm
+sub _collectChecks {
+    for my $type (qw(Plugins Contrib)) {
+        my  $typeDir = File::Spec->catdir($Foswiki::cfg{ScriptDir},'..','lib','Foswiki', $type);
+        opendir(my $dh, $typeDir) or die "Cannot open directory: $!";
+        my @modules = sort map {$_ =  Foswiki::Sandbox::untaintUnchecked($_)} grep {/.pm$/} readdir($dh);
+        closedir($dh);
+        for my $pm (@modules) {
+            my $doRequire = 0;
+            # Check if we want to require the module.
+            # Do not require files not named *Contrib.pm from Contrib directory
+            if (($type eq 'Contrib') and ($pm =~ /Contrib\.pm$/)) {
+                $doRequire = 1;
+            } elsif (($type eq 'Plugins') and (defined $Foswiki::cfg{Plugins}{substr($pm, 0, -3)}{Module})) {
+                $doRequire = 1;
+            }
+
+            if ($doRequire) {
+                require(File::Spec->catfile($typeDir, $pm));
+                my $moduleDir = File::Spec->catdir($typeDir, substr($pm, 0, -3));
+                # Module is required, now check if it has a sub "maintenanceHandler"
+                {
+                    no strict 'refs';
+                    my $handlerstr = 'Foswiki::' . $type . '::' . substr($pm, 0, -3) . '::maintenanceHandler';
+                    if (*{$handlerstr}{CODE}) {
+                        my $res = &{$handlerstr}();
+                    }
+                }
+            }
+        }
+    }
+}
+
+## Public ##
+
 sub initPlugin {
     my ( $topic, $web, $user, $installWeb ) = @_;
 
@@ -277,31 +301,6 @@ sub initPlugin {
 
     # Plugin correctly initialized
     return 1;
-}
-
-# This sub is used to collect Maintenance.pm
-sub _collectChecks {
-    for my $type qw(Plugins Contrib) {
-        my  $typeDir = File::Spec->catdir($Foswiki::cfg{ScriptDir},'..','lib','Foswiki', $type);
-        opendir(my $dh, $typeDir) or die "Cannot open directory: $!";
-        my @modules = sort grep {/.pm$/} readdir($dh);
-        closedir($dh);
-        for my $pm (@modules) {
-            my $moduleDir = File::Spec->catdir($typeDir, substr($pm, 0, -3));
-            my $requirePath = File::Spec->catfile($moduleDir, 'Maintenance.pm');
-            if ( -d $moduleDir and -f $requirePath) {
-                $requirePath = Foswiki::Sandbox::untaintUnchecked($requirePath);
-                # #FIXME: Technically, there could be anything in this file. Do we prevent that, or will we assume that the lib namespace is safe?
-                require(File::Spec->catfile($requirePath));
-                # Module is required, now check if it has a $maintain scalar that evaluates to true
-                {
-                    no strict 'refs';
-                    my $modstr = 'Foswiki::' . $type . '::' . substr($pm, 0, -3) . '::Maintenance';
-                    if (${$modstr . '::maintain'}) { &{$modstr . '::maintain'}; }
-                }
-            }
-        }
-    }
 }
 
 # This can be used to override existing checks or to add new ones.
@@ -319,7 +318,7 @@ sub tagList {
     # FIXME: Is this safe for non Admins? Maybe change to adminonly
     _collectChecks();
     my $result = "| *Check* | *Description* |\n";
-    for my $check ( keys %$checks ) {
+    for my $check ( sort keys %$checks ) {
         $result .= '| ' . $checks->{$check}->{name} . ' | ' . $checks->{$check}->{description}  . " |\n";
     }
     return $result;
@@ -334,7 +333,7 @@ sub tagCheck {
         my $problems = 0;
         my $warnings = {};
         _collectChecks();
-        for my $check ( keys %$checks ) {
+        for my $check ( sort keys %$checks ) {
             # Exclude experimental checks, if mpcheck=safe
             unless ((CGI::param('mpcheck') eq 'safe') && ( exists $checks->{$check}->{experimental})) {
                 my $res = $checks->{$check}->{check}();
@@ -362,6 +361,57 @@ sub tagCheck {
         $result = 'MP_CHECK only allowed for admins and in use with http get mpcheck set. ';
     }
     return $result;
+}
+
+# MaintenancePlugin compatibility
+sub maintenanceHandler {
+    Foswiki::Plugins::MaintenancePlugin::registerCheck("general:filepermissions", {
+        name => "File permissions",
+        description => "File permissions incorrect",
+        check => sub {
+            my $result = { result => 0 };
+            # Core module
+            require File::Find;
+            my @dirs = ( $Foswiki::cfg{DataDir}, $Foswiki::cfg{PubDir} );
+            our $direg = qr(^($Foswiki::cfg{DataDir})|($Foswiki::cfg{PubDir}));
+            our @offenders = ();
+            our @gcos = getpwuid( $< );
+            File::Find::finddepth( { wanted => \&permissions, untaint => 1, untaint_pattern => /$direg/ }, @dirs );
+            # This implements:  find . ! -user www-data -or ! -perm -u+r -or \( -perm -u+w -name "*,v" \)
+            sub permissions {
+                my ( $dev, $ino, $mode, $nlink, $uid, $gid ) = lstat( $_ );
+                if ( ( ( $uid != $gcos[2] ) && ( ( $mode & 0400 ) == 0400 ) )
+                    or ( ( $File::Find::name =~ /,v$/) && ( ( $mode & 0600 ) == 0600 ) )
+                    or ( ( $File::Find::name =~ /\.txt$/) && ( ( $mode & 0600 ) != 0600 ) )
+                ) {
+                    push ( @offenders, $File::Find::name );
+                }
+            }
+            if ( scalar @offenders ) {
+                $result->{result} = 1;
+                $result->{priority} = ERROR;
+                $result->{solution} = "There exist " . scalar @offenders . " files and directories with wrong permissions.<br>" . join("<br>", @offenders);
+                my $help = '<br>Try one of these commands in the foswiki directory:<br><pre>    chown -R www-data:www-data .<br>    find -type d -exec chmod 755 {} \;<br>    chmod -R u+w *<br>    find . -type f -name "*,v" -exec chmod 444 {} \;</pre>';
+                $result->{solution} .= $help;
+            }
+            return $result;
+        },
+        experimental => 1
+    });
+    Foswiki::Plugins::MaintenancePlugin::registerCheck("general:release", {
+        name => "Foswiki release",
+        description => "Installed Foswiki release is not newest supported stable version.",
+        check => sub {
+            my $result = { result => 0 };
+            my $last = 'Foswiki-1.1.9';
+            if ( $Foswiki::RELEASE ne $last ) {
+                $result->{result} = 1;
+                $result->{priority} = WARN;
+                $result->{solution} = "Update Foswiki to $last. I am very sorry.";
+            }
+            return $result;
+        }
+    });
 }
 
 1;
