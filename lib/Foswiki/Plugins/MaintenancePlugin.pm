@@ -164,20 +164,6 @@ our $checks = {
             return $result;
         }
     },
-    "general:userautocomplete" => {
-        name => "User autocomplete configuration",
-        description => "USERAUTOCOMPLETE set in SitePreferences",
-        check => sub {
-            my $result = { result => 0 };
-            my ( $spmeta, $sp ) = Foswiki::Func::readTopic( 'Main', 'SitePreferences');
-            if ( $spmeta->getPreference( "USERAUTOCOMPLETE" ) eq '' ) {
-                $result->{result} = 1;
-                $result->{priority} = CRITICAL;
-                $result->{solution} = "Add USERAUTOCOMPLETE setting to [[Main.SitePreferences]] according to documentation";
-            }
-            return $result;
-        }
-    },
     "general:locales" => {
         name => "Locale directories",
         description => "Directories without System topic in locales dir.",
