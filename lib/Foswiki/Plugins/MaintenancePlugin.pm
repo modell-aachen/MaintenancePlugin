@@ -188,50 +188,6 @@ our $checks = {
             }
             return $result;
         }
-    },
-    # FIXME this is most likely not portable to non linux systems, or 2.4 linux systems.
-    "general:stringifiercontrib:commands" => {
-        name => "Stringifier command validity",
-        description => "One or more necessary stringifier commands appear to be nonfunctional.",
-        check => sub {
-            my $result = { result => 0 };
-            if ( my @cmds = keys( %{$Foswiki::cfg{StringifierContrib}} ) ) {
-                my $indexer = $Foswiki::cfg{StringifierContrib}{WordIndexer};
-                my @offenders = ();
-                my @path = ('');
-                push @path, File::Spec->path();
-                for my $cmd ( @cmds ) {
-                    if ( $cmd =~ /Cmd$/ ) {
-                        # Do not check unused word indexers.
-                        if ( ( ( $indexer eq 'wv' ) && ( $cmd =~ /^(abiwordCmd)|(antiwordCmd)$/) )
-                            or ( ( $indexer eq 'antiword' ) && ( $cmd =~ /^(abiwordCmd)|(wvTextCmd)$/ ) )
-                            or ( ( $indexer eq 'abiword'  ) && ( $cmd =~ /^(antiwordCmd)|(wvTextCmd)$/ ) ) ) {
-                            next;
-                        }
-                        # Omit parameters
-                        my $executable = ( split( / /, $Foswiki::cfg{StringifierContrib}{$cmd} ) )[0];
-                        my $found = 0;
-                        # check local dir, then PATH
-                        if ( $executable =~ /^\./ ) {
-                            if ( -x $executable ) { $found = 1; last; }
-                        }
-                        for my $check ( map { File::Spec->catfile( $_, $executable ) } @path ) {
-                            if ( -x $check ) { $found = 1; last; }
-                        }
-                        unless ( $found ) {
-                            push @offenders, "{StringifierContrib}{$cmd}";
-                        }
-                    }
-                }
-                if ( scalar @offenders > 0 ) {
-                        $result->{result} = 1;
-                        $result->{priority} = ERROR;
-                        $result->{solution} = "Check the following StringifierContrib commands: " . join( ', ', @offenders ) . ".";
-                }
-            }
-            return $result;
-        },
-        experimental => 0
     }
 };
 
