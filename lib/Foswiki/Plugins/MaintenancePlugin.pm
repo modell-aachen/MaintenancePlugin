@@ -221,7 +221,7 @@ sub _collectChecks {
             # Do not require files not named *Contrib.pm from Contrib directory
             if (($type eq 'Contrib') and ($pm =~ /Contrib\.pm$/)) {
                 $doRequire = 1;
-            } elsif (($type eq 'Plugins') and (defined $Foswiki::cfg{Plugins}{substr($pm, 0, -3)}{Module})) {
+            } elsif (($type eq 'Plugins') and (defined $Foswiki::cfg{Plugins}{substr($pm, 0, -3)}{Module}) and ($Foswiki::cfg{Plugins}{substr($pm, 0, -3)}{Enabled})) {
                 $doRequire = 1;
             }
 
