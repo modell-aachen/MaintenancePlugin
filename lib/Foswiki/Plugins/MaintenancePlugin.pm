@@ -10,15 +10,15 @@ use Foswiki::Plugins ();
 # Core modules
 use File::Spec; # Needed for portable checking of PATH
 
-our $VERSION = '0.6';
-our $RELEASE = "0.6";
+our $VERSION = '0.7';
+our $RELEASE = "0.7";
 our $SHORTDESCRIPTION = 'Q.wiki maintenance plugin';
 our $NO_PREFS_IN_TOPIC = 1;
 
-# priorities for check results
-use constant CRITICAL => 0;
-use constant ERROR => 1;
-use constant WARN => 2;
+# Exported priorities for check results
+our $CRITICAL = 0;
+our $ERROR = 1;
+our $WARN = 2;
 
 our $checks = {
     "kvp:talk" => {
@@ -30,27 +30,9 @@ our $checks = {
                 # TODO check for Topics with old "Talk" suffix here
                 if ( $Foswiki::cfg{Extensions}{KVPPlugin}{suffix} ne 'TALK' ) {
                     $result->{result} = 1;
-                    $result->{priority} = WARN;
+                    $result->{priority} = $WARN;
                     $result->{solution} = 'Change setting {Extensions}{KVPPlugin}{suffix} to \'TALK\' and migrate existing topics using the current suffix, which is ' . $Foswiki::cfg{Extensions}{KVPPlugin}{suffix};
                 }
-            }
-            return $result;
-        }
-    },
-    "ldapcontrib:refresh" => {
-        name => "LDAP refresh enabled",
-        description => "Check if a cronjob with refreshldap=on exists",
-        check => sub {
-            my $result = { result => 0 };
-            if ( $Foswiki::cfg{LoginManager} =~ /(Ldap)|(Switchable)|(Kerberos)/ ) {
-                    # Read crontab for webserver user
-                    my $ct = qx(crontab -l);
-                    unless ( $ct =~ /refreshldap=on/ ) {
-                        $result->{result} = 1;
-                        $result->{priority} = ERROR;
-                        my ( $name, @rest ) = getpwuid( $< );
-                        $result->{solution} = "Add refreshldap cronjob to to crontab for user \"$name\" as described in documentation";
-                    }
             }
             return $result;
         }
@@ -63,7 +45,7 @@ our $checks = {
             if ( ( exists $Foswiki::cfg{Plugins}{ModacContextMenuPlugin}{Enabled} ) and ( $Foswiki::cfg{Plugins}{ModacContextMenuPlugin}{Enabled} ) ) {
                     unless ( Foswiki::Func::getPreferencesValue('SKIN') =~ /contextmenu/ ) {
                         $result->{result} = 1;
-                        $result->{priority} = ERROR;
+                        $result->{priority} = $ERROR;
                         $result->{solution} = "Add contextmenu to SKIN in [[Main.SitePreferences]]";
                     }
             }
@@ -77,7 +59,7 @@ our $checks = {
             my $result = { result => 0 };
             if ( ( exists $Foswiki::cfg{ReplaceIfEditedAgainWithin} ) and ( $Foswiki::cfg{ReplaceIfEditedAgainWithin} != 0 ) ) {
                 $result->{result} = 1;
-                $result->{priority} = WARN;
+                $result->{priority} = $WARN;
                 $result->{solution} = "Set {ReplaceIfEditedAgainWithin} to 0";
             }
             return $result;
@@ -92,7 +74,7 @@ our $checks = {
                 my ( $spmeta, $sp ) = Foswiki::Func::readTopic( 'Main', 'SitePreferences');
                 if ( $spmeta->getPreference( "ACTIONTRACKERPLUGIN_UPDATEAJAX" ) ne '1' ) {
                     $result->{result} = 1;
-                    $result->{priority} = ERROR;
+                    $result->{priority} = $ERROR;
                     $result->{solution} = "Add '   * Set ACTIONTRACKERPLUGIN_UPDATEAJAX = 1' to [[Main.SitePreferences]]";
                 }
             }
@@ -110,7 +92,7 @@ our $checks = {
             $nowysiwyg =~ s/^\s+//;
             if ( $nowysiwyg ne '1' ) {
                 $result->{result} = 1;
-                $result->{priority} = WARN;
+                $result->{priority} = $WARN;
                 $result->{solution} = "Add '   * Set NOWYSIWYG = 1' to [[Custom.WebPreferences]]";
             }
             return $result;
@@ -124,7 +106,7 @@ our $checks = {
             my ( $gvmeta, $gv ) = Foswiki::Func::readTopic( 'Main', 'GroupViewTemplate' );
             unless ( ( $gv =~ /USERAUTOCOMPLETE/ ) && ( $gv =~ /redirectto" value="%BASEWEB%\.%BASETOPIC%/ ) ) {
                     $result->{result} = 1;
-                    $result->{priority} = ERROR;
+                    $result->{priority} = $ERROR;
                     $result->{solution} = "Update [[Main.GroupViewTemplate]] manually from QwikiContrib";
             }
             return $result;
@@ -149,7 +131,7 @@ our $checks = {
             # Could not determine topic?
             if ( $topic eq '' ) {
                 $result->{result} = 1;
-                $result->{priority} = WARN;
+                $result->{priority} = $WARN;
                 $result->{solution} = "Could not find responsibilites topic. Find and check manually if it lists only correct topics";
             } else {
                 # Check topic
@@ -157,7 +139,7 @@ our $checks = {
                 # check it SOLRSEARCH excludes Discussions etc.
                 unless ( $tv =~ /-topic:\(\*Template OR \*Talk OR \*TALK OR \*Form OR NormClassification\*\)/ ) {
                         $result->{result} = 1;
-                        $result->{priority} = WARN;
+                        $result->{priority} = $WARN;
                         $result->{solution} = "Update [[$web.$topic]] manually to exclude unwanted topics from results";
                 }
             }
@@ -172,7 +154,7 @@ our $checks = {
             my ( $spmeta, $sp ) = Foswiki::Func::readTopic( 'Main', 'SitePreferences');
             if ( $spmeta->getPreference( "USERAUTOCOMPLETE" ) eq '' ) {
                 $result->{result} = 1;
-                $result->{priority} = CRITICAL;
+                $result->{priority} = $CRITICAL;
                 $result->{solution} = "Add USERAUTOCOMPLETE setting to [[Main.SitePreferences]] according to documentation";
             }
             return $result;
@@ -197,7 +179,7 @@ our $checks = {
             }
             if ( scalar @unknowns > 0 ) {
                 $result->{result} = 1;
-                $result->{priority} = WARN;
+                $result->{priority} = $WARN;
                 $result->{solution} = "Check locale direcories. If need be, merge custom localizations into subdirecory \"ZZCustom\". Offending directories: " . join( ", ", @unknowns );
             }
             return $result;
@@ -297,9 +279,9 @@ sub tagCheck {
                     $problems++;
                     my $prio =  $res->{priority};
                     my ( $COLOR, $ENDCOLOR ) = ( '', '' );
-                    if ( $prio < ERROR ) { $ENDCOLOR = '%ENDCOLOR%'; }
-                    if ( $prio == CRITICAL ) { $COLOR = '%RED%'; }
-                    if ( $prio == ERROR ) { $COLOR = '%ORANGE%'; }
+                    if ( $prio < $ERROR ) { $ENDCOLOR = '%ENDCOLOR%'; }
+                    if ( $prio == $CRITICAL ) { $COLOR = '%RED%'; }
+                    if ( $prio == $ERROR ) { $COLOR = '%ORANGE%'; }
                     unless ( exists $warnings->{$prio} ) { $warnings->{$prio} = []; }
                     push( @{$warnings->{$prio}}, "| $COLOR$prio$ENDCOLOR | $COLOR" . $checks->{$check}->{name} . "$ENDCOLOR | " .  $checks->{$check}->{description} . ' | ' . $res->{solution} . " |\n" );
                 }
@@ -345,7 +327,7 @@ sub maintenanceHandler {
             }
             if ( scalar @offenders ) {
                 $result->{result} = 1;
-                $result->{priority} = ERROR;
+                $result->{priority} = $ERROR;
                 $result->{solution} = "There exist " . scalar @offenders . " files and directories with wrong permissions.<br>" . join("<br>", @offenders);
                 my $help = '<br>Try one of these commands in the foswiki directory:<br><pre>    chown -R www-data:www-data .<br>    find -type d -exec chmod 755 {} \;<br>    chmod -R u+w *<br>    find . -type f -name "*,v" -exec chmod 444 {} \;</pre>';
                 $result->{solution} .= $help;
@@ -362,7 +344,7 @@ sub maintenanceHandler {
             my $last = 'Foswiki-1.1.9';
             if ( $Foswiki::RELEASE ne $last ) {
                 $result->{result} = 1;
-                $result->{priority} = WARN;
+                $result->{priority} = $WARN;
                 $result->{solution} = "Update Foswiki to $last. I am very sorry.";
             }
             return $result;
