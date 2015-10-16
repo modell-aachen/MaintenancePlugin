@@ -46,19 +46,19 @@ You can use the registerCheck API to add your own checks to the MaintenancePlugi
 *Example*
 
 <verbatim>
-registerCheck( "general:replaceifeditedagainwithin", {
+registerCheck("general:replaceifeditedagainwithin", {
     name => "ReplaceIfEditedAgainWithin set correctly",
     description => "{ReplaceIfEditedAgainWithin} set to 0",
     check => sub {
         my $result = { result => 0 };
-        if ( ( exists $Foswiki::cfg{ReplaceIfEditedAgainWithin} ) and ( $Foswiki::cfg{ReplaceIfEditedAgainWithin} != 0 ) ) {
+        if (( exists $Foswiki::cfg{ReplaceIfEditedAgainWithin}) and ($Foswiki::cfg{ReplaceIfEditedAgainWithin} != 0)) {
             $result->{result} = 1;
-            $result->{priority} = WARN;
+            $result->{priority} = $Foswiki::Plugins::MaintenancePlugin::WARN;
             $result->{solution} = "Set {ReplaceIfEditedAgainWithin} to 0";
         }
         return $result;
    }
-);
+});
 </verbatim>
 
 ---++ Plugin Info
