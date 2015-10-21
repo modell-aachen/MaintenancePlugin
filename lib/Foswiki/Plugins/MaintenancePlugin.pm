@@ -186,23 +186,26 @@ sub _collectChecks {
         for my $pm (@modules) {
             my $doRequire = 0;
             # Check if we want to require the module.
-            # Do not require files not named *Contrib.pm from Contrib directory
-            if (($type eq 'Contrib') and ($pm =~ /Contrib\.pm$/)) {
+            # Do not require files not named *Contrib.pm from Contrib directory.
+            # Also exclude some known criminal PluginContribs, which are stealthily required by their respective Plugin or vice versa.
+            if (($type eq 'Contrib') and ($pm =~ /Contrib\.pm$/) and ($pm !~ /(JEditableContrib)|(MailerContrib)\.pm/)) {
                 $doRequire = 1;
-            } elsif (($type eq 'Plugins') and (defined $Foswiki::cfg{Plugins}{substr($pm, 0, -3)}{Module}) and ($Foswiki::cfg{Plugins}{substr($pm, 0, -3)}{Enabled})) {
+            } elsif (($type eq 'Plugins') and (defined $Foswiki::cfg{Plugins}{substr($pm, 0, -3)}{Module}) and ($Foswiki::cfg{Plugins}{substr($pm, 0, -3)}{Enabled}) and ($pm !~ /(JEditableContribPlugin)\.pm/)) {
                 $doRequire = 1;
             }
 
             if ($doRequire) {
-                require(File::Spec->catfile($typeDir, $pm));
+                no strict 'refs';
+                # Require module, if version string not found
+                unless (${'Foswiki::' . $type . '::' . substr($pm, 0, -3) . '::VERSION'}) {
+                    require(File::Spec->catfile($typeDir, $pm));
+                }
+
                 my $moduleDir = File::Spec->catdir($typeDir, substr($pm, 0, -3));
                 # Module is required, now check if it has a sub "maintenanceHandler"
-                {
-                    no strict 'refs';
-                    my $handlerstr = 'Foswiki::' . $type . '::' . substr($pm, 0, -3) . '::maintenanceHandler';
-                    if (*{$handlerstr}{CODE}) {
-                        my $res = &{$handlerstr}();
-                    }
+                my $handlerstr = 'Foswiki::' . $type . '::' . substr($pm, 0, -3) . '::maintenanceHandler';
+                if (*{$handlerstr}{CODE}) {
+                    my $res = &{$handlerstr}();
                 }
             }
         }
