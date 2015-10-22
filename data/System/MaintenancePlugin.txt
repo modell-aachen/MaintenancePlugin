@@ -42,24 +42,29 @@ You can use the registerCheck API to add your own checks to the MaintenancePlugi
             * =$Foswiki::Plugins::MaintenancePlugin::ERROR= - Issue should be fixed, or might prevent components from working.
             * =$Foswiki::Plugins::MaintenancePlugin::WARNING= - Issue might affect certain components in a negative way.
          * =solution= - mandatory if =result= is not =0=. Text containing information on how to solve the problem.
-      * =experimental - , optional
+      * =experimental= - , optional.
+
+It is unnecessary to require =Foswiki::Plugins::MaintenancePlugin=in your plugin, unless you actually require it. MaintenancePlugin guarantees that it is fully initialized before the =maintenanceHandler= is run.
 
 *Example*
 
 <verbatim>
-registerCheck("general:replaceifeditedagainwithin", {
-    name => "ReplaceIfEditedAgainWithin set correctly",
-    description => "{ReplaceIfEditedAgainWithin} set to 0",
-    check => sub {
-        my $result = { result => 0 };
-        if (( exists $Foswiki::cfg{ReplaceIfEditedAgainWithin}) and ($Foswiki::cfg{ReplaceIfEditedAgainWithin} != 0)) {
-            $result->{result} = 1;
-            $result->{priority} = $Foswiki::Plugins::MaintenancePlugin::WARN;
-            $result->{solution} = "Set {ReplaceIfEditedAgainWithin} to 0";
-        }
-        return $result;
-   }
-});
+# MaintenancePlugin integration
+sub maintenanceHandler {
+    registerCheck("general:replaceifeditedagainwithin", {
+        name => "ReplaceIfEditedAgainWithin set correctly",
+        description => "{ReplaceIfEditedAgainWithin} set to 0",
+        check => sub {
+            my $result = { result => 0 };
+            if (( exists $Foswiki::cfg{ReplaceIfEditedAgainWithin}) and ($Foswiki::cfg{ReplaceIfEditedAgainWithin} != 0)) {
+                $result->{result} = 1;
+                $result->{priority} = $Foswiki::Plugins::MaintenancePlugin::WARN;
+                $result->{solution} = "Set {ReplaceIfEditedAgainWithin} to 0.";
+            }
+            return $result;
+       }
+    });
+}
 </verbatim>
 
 ---++ Plugin Info
