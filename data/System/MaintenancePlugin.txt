@@ -1,7 +1,8 @@
 %META:TOPICPARENT{name="Plugins"}%
 ---+ MaintenancePlugin
 
-Q.wiki maintenace plugin.
+Q.wiki maintenance plugin.
+
 ---++ MP_LIST
 
 Lists registered checks.
@@ -78,3 +79,6 @@ registerCheck("general:replaceifeditedagainwithin", {
 |  Home | http://www.modell-aachen.de |
 |  Feedback | glatki(at)modell-aachen(dot)de |
 
+<div id="maintenancePlugininvisible" style="display: none;">
+   * Set NOAUTOLINK = on
+</div>
