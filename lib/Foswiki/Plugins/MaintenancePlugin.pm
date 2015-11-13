@@ -9,7 +9,6 @@ use Foswiki::Plugins ();
 
 # Core modules
 use File::Spec; # Needed for portable checking of PATH
-use File::Find;
 
 
 our $VERSION = '0.7';
@@ -178,36 +177,7 @@ our $checks = {
         description => "Check if there are any Forms with an USERAUTOCOMPLETE field",
         check => sub {
             my $result = { result => 0 };
-            my @unknowns = ();
-			opendir( my $localedh, $Foswiki::cfg{DataDir} ) or push(@unknowns, "Could not open Data dir" );
-			if ( scalar @unknowns == 0) {
-				# check dir for existing Forms with USERAUTOCOMPLETE-Field
-				foreach my $fp (readdir $localedh) {
-					if ($fp eq "." || $fp eq "..") {
-						next;
-					}
-					my $abFile = $Foswiki::cfg{DataDir}.'/'.$fp;
-					if (-f $abFile) {
-						open my $fh, "<", $abFile or push(@unknowns, "Could not read file " );
-						foreach my $line (<$fh>) {
-							if ($line =~ /USERAUTOCOMPLETE/) {
-								push(@unknowns, $abFile);
-								last;
-							}
-						}	
-						close $fh or push(@unknowns, "Could not close file " );
-					}
-					if (-d $abFile) {
-						if($abFile =~ /,pfv$/){
-							next;
-						}
-						my @input = _grepRecursiv($abFile);						
-						if(scalar @input >0){
-							push (@unknowns,@input) ;
-						}
-					}
-				}
-			}
+            my @unknowns = _grepRecursiv($Foswiki::cfg{DataDir});
 			if ( scalar @unknowns > 0 ) {
 				$result->{result} = 1;
 				$result->{priority} = $WARN;
@@ -230,18 +200,22 @@ sub _grepRecursiv{
 				next;
 			}
 			my $abFile = $dir.'/'.$fp;
-			if($abFile =~ /NominalForm\.txt/){
-				Foswiki::Func::writeWarning($abFile);
-			}
 			if (-f $abFile) {
-				open my $fh, "<", $abFile or push(@unknowns, "Could not read file " );
-				foreach my $line (<$fh>) {
-					if ($line =~ /USERAUTOCOMPLETE/) {
-						push(@unknowns, $abFile);
-						last;
-					}
-				}	
-				close $fh or push(@unknowns, "Could not close file " );
+				if($abFile !~ /.txt$/){
+					next;
+				}
+				my $fh;
+				if (open $fh, "<", $abFile) {
+					foreach my $line (<$fh>) {
+						if ($line =~ /%USERAUTOCOMPLETE%/) {
+							push(@unknowns, $abFile);
+							last;
+						}
+					}	
+					close $fh or push(@unknowns, "Could not close file " );
+				}else{
+					push(@unknowns, "Could not read file " );
+				}
 			}
 			if (-d $abFile) { 
 				if($abFile =~ /,pfv$/){
