@@ -51,7 +51,7 @@ It is unnecessary to require =Foswiki::Plugins::MaintenancePlugin=in your plugin
 <verbatim>
 # MaintenancePlugin integration
 sub maintenanceHandler {
-    registerCheck("general:replaceifeditedagainwithin", {
+    Foswiki::Plugins::MaintenancePlugin::registerCheck("general:replaceifeditedagainwithin", {
         name => "ReplaceIfEditedAgainWithin set correctly",
         description => "{ReplaceIfEditedAgainWithin} set to 0",
         check => sub {
