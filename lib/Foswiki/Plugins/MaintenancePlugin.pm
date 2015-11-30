@@ -10,6 +10,7 @@ use Foswiki::Plugins ();
 # Core modules
 use File::Spec; # Needed for portable checking of PATH
 
+
 our $VERSION = '0.7';
 our $RELEASE = "0.7";
 our $SHORTDESCRIPTION = 'Q.wiki maintenance plugin';
@@ -170,11 +171,64 @@ our $checks = {
             }
             return $result;
         }
+    },
+    "autocomplete" => {
+        name => "Grep USERAUTOCOMPLETE",
+        description => "Check if there are any Forms with an USERAUTOCOMPLETE field",
+        check => sub {
+            my $result = { result => 0 };
+            my @unknowns = _grepRecursiv($Foswiki::cfg{DataDir});
+            if ( scalar @unknowns > 0 ) {
+                $result->{result} = 1;
+                $result->{priority} = $WARN;
+                $result->{solution} = "Check files in Data-Dir for USERAUTOCOMPLETE:" . '<div>' . join( "</div><div>", @unknowns ) . '</div>';
+            }
+            return $result;
+        }
     }
 };
 
-
 ## Helper ##
+sub _grepRecursiv{
+    my ( $dir ) = @_;
+    my @unknowns = ();
+    opendir( my $localedh, $dir ) or push(@unknowns, "Could not open dir" );
+    if ( scalar @unknowns == 0) {
+        foreach my $fp (readdir $localedh) {
+            if ($fp eq "." || $fp eq "..") {
+                next;
+            }
+            my $abFile = $dir.'/'.$fp;
+            if (-f $abFile) {
+                if($abFile !~ /.txt$/){
+                    next;
+                }
+                my $fh;
+                if (open $fh, "<", $abFile) {
+                    foreach my $line (<$fh>) {
+                        if ($line =~ /%USERAUTOCOMPLETE%/) {
+                            push(@unknowns, $abFile);
+                            last;
+                        }
+                    }
+                    close $fh or push(@unknowns, "Could not close file " );
+                }else{
+                    push(@unknowns, "Could not read file " );
+                }
+            }
+            if (-d $abFile) { 
+                if($abFile =~ /,pfv$/){
+                    next;
+                }
+                my @input = _grepRecursiv($abFile);
+                if(scalar @input >0){
+                    push (@unknowns,@input) ;
+                }
+            }
+        }
+    }
+    return @unknowns;
+}
 
 # This sub is used to collect Maintenance.pm
 sub _collectChecks {
