@@ -138,7 +138,7 @@ our $checks = {
                 # Check topic
                 my ( $tmeta, $tv ) = Foswiki::Func::readTopic( $web, $topic );
                 # check it SOLRSEARCH excludes Discussions etc.
-                unless ( $tv =~ /-topic:\(\*Template OR \*Talk OR \*TALK OR \*Form OR NormClassification\*\)/ ) {
+                unless ( $tv =~ /-topic:\(\*Template OR \*%WORKFLOWSUFFIX% OR \*Form OR NormClassification\*\)/ ) {
                         $result->{result} = 1;
                         $result->{priority} = $WARN;
                         $result->{solution} = "Update [[$web.$topic]] manually to exclude unwanted topics from results";
