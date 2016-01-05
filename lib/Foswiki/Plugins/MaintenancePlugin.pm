@@ -138,7 +138,7 @@ our $checks = {
                 # Check topic
                 my ( $tmeta, $tv ) = Foswiki::Func::readTopic( $web, $topic );
                 # check it SOLRSEARCH excludes Discussions etc.
-                unless ( $tv =~ /-topic:\(\*Template OR \*Talk OR \*TALK OR \*Form OR NormClassification\*\)/ ) {
+                unless ( $tv =~ /-topic:\(\*Template OR \*%WORKFLOWSUFFIX% OR \*Form OR NormClassification\*\)/ ) {
                         $result->{result} = 1;
                         $result->{priority} = $WARN;
                         $result->{solution} = "Update [[$web.$topic]] manually to exclude unwanted topics from results";
@@ -242,7 +242,7 @@ sub _collectChecks {
             # Check if we want to require the module.
             # Do not require files not named *Contrib.pm from Contrib directory.
             # Also exclude some known criminal PluginContribs, which are stealthily required by their respective Plugin or vice versa.
-            if (($type eq 'Contrib') and ($pm =~ /Contrib\.pm$/) and ($pm !~ /(JEditableContrib)|(MailerContrib)|(VirtualHostingContrib)\.pm/)) {
+            if (($type eq 'Contrib') and ($pm =~ /(?:Contrib|Skin)\.pm$/) and ($pm !~ /(JEditableContrib)|(MailerContrib)|(VirtualHostingContrib)\.pm/)) {
                 $doRequire = 1;
             } elsif (($type eq 'Plugins') and (defined $Foswiki::cfg{Plugins}{substr($pm, 0, -3)}{Module}) and ($Foswiki::cfg{Plugins}{substr($pm, 0, -3)}{Enabled}) and ($pm !~ /(JEditableContribPlugin)\.pm/)) {
                 $doRequire = 1;
