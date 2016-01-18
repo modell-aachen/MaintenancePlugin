@@ -82,6 +82,52 @@ our $checks = {
             return $result;
         }
     },
+    "actiontrackerplugin:remains" => {
+        name => "Check for Actiontracker remains",
+        description => "Search for Actiontracker remains in all Webs.",
+        check => sub {
+            my $result = { result => 0 };
+            my $return_text;
+            if ( exists $Foswiki::cfg{Plugins}{ActionTrackerPlugin}{Enabled} ) {
+                $result->{result} = 1;
+                $return_text .= "<div>ActionTracker is installed.</div><br>";
+            }else{
+                if ( -e $Foswiki::cfg{ScriptDir} ."/../lib/Foswiki/Plugins/ActionTrackerPlugin.pm") {
+                    $result->{result} = 1;
+                    $return_text .= "<div>ActionTracker Plugin is on Disk. Delete ActionTrackerPlugin.pm</div><br>";
+                }
+            }
+            my @webs = Foswiki::Func::getListOfWebs("user");
+            my @actionWebs;
+            foreach my $web (@webs) {
+                my $tableHeader = Foswiki::Func::getPreferencesValue("ACTIONTRACKERPLUGIN_TABLEHEADER", $web);
+                if ($tableHeader ne ''){
+                    $result->{result} = 1;
+                    push @actionWebs, $web;
+                }
+            }
+            # Also check SitePreferences
+            my $updateajax = Foswiki::Func::getPreferencesValue("ACTIONTRACKERPLUGIN_UPDATEAJAX");
+            my $tableHeader = Foswiki::Func::getPreferencesValue("ACTIONTRACKERPLUGIN_TABLEHEADER");
+            if ($updateajax ne '' || $tableHeader ne ''){
+                $result->{result} = 1;
+                push @actionWebs, 'Main (SeitePreferences)';
+            }
+            if (scalar @actionWebs > 0){
+                $return_text .= "Check WebPreferences from following Webs for Actiontracker settings:" . '<div>' . join( "</div><div>", @actionWebs ) . '</div><br>';
+            }
+            my @unknowns = _grepRecursiv($Foswiki::cfg{DataDir}, '%ACTION{');
+            if ( scalar @unknowns > 0 ) {
+                $result->{result} = 1;
+                $return_text .= "Check files in Data-Dir for Action Macro:" . '<div>' . join( "</div><div>", @unknowns ) . '</div>';
+            }
+            if ( 1 == $result->{result} ) {
+                $result->{priority} = $WARN;
+                $result->{solution} = $return_text;
+            }
+            return $result;
+        }
+    },
     "general:customnowysiwyg" => {
         name => "Custom web NOWYSIWYG",
         description => "Custom web has NOWYSIWYG preference",
@@ -177,7 +223,7 @@ our $checks = {
         description => "Check if there are any Forms with an USERAUTOCOMPLETE field",
         check => sub {
             my $result = { result => 0 };
-            my @unknowns = _grepRecursiv($Foswiki::cfg{DataDir});
+            my @unknowns = _grepRecursiv($Foswiki::cfg{DataDir}, '%USERAUTOCOMPLETE%');
             if ( scalar @unknowns > 0 ) {
                 $result->{result} = 1;
                 $result->{priority} = $WARN;
@@ -190,7 +236,7 @@ our $checks = {
 
 ## Helper ##
 sub _grepRecursiv{
-    my ( $dir ) = @_;
+    my ( $dir, $regex ) = @_;
     my @unknowns = ();
     opendir( my $localedh, $dir ) or push(@unknowns, "Could not open dir" );
     if ( scalar @unknowns == 0) {
@@ -200,13 +246,13 @@ sub _grepRecursiv{
             }
             my $abFile = $dir.'/'.$fp;
             if (-f $abFile) {
-                if($abFile !~ /.txt$/){
+                if($abFile !~ /\.txt$/){
                     next;
                 }
                 my $fh;
                 if (open $fh, "<", $abFile) {
                     foreach my $line (<$fh>) {
-                        if ($line =~ /%USERAUTOCOMPLETE%/) {
+                        if ($line =~ /$regex/) {
                             push(@unknowns, $abFile);
                             last;
                         }
@@ -216,11 +262,11 @@ sub _grepRecursiv{
                     push(@unknowns, "Could not read file " );
                 }
             }
-            if (-d $abFile) { 
+            if (-d $abFile) {
                 if($abFile =~ /,pfv$/){
                     next;
                 }
-                my @input = _grepRecursiv($abFile);
+                my @input = _grepRecursiv($abFile, $regex);
                 if(scalar @input >0){
                     push (@unknowns,@input) ;
                 }
