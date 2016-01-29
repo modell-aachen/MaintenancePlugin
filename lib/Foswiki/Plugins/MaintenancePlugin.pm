@@ -168,40 +168,6 @@ our $checks = {
             return $result;
         }
     },
-    "processescontentcontrib:responsibilities" => {
-        name => "Responsibilities outdated",
-        description => "Responsibilites topic search is outdated",
-        check => sub {
-            my $result = { result => 0 };
-            # find topic
-            my ($web, $topic) = ( '', '' );
-            if ( Foswiki::Func::webExists( 'Processes' ) ) {
-                $web = 'Processes';
-                if ( Foswiki::Func::topicExists( $web, 'Responsibilities' ) ) { $topic = 'Responsibilities'; }
-                elsif ( Foswiki::Func::topicExists( $web, 'Seitenverantwortlichkeiten' ) ) { $topic = 'Seitenverantwortlichkeiten'; }
-            } elsif ( Foswiki::Func::webExists( 'Prozesse' ) ) {
-                $web = 'Prozesse';
-                if ( Foswiki::Func::topicExists( $web, 'Responsibilities' ) ) { $topic = 'Responsibilities'; }
-                elsif ( Foswiki::Func::topicExists( $web, 'Seitenverantwortlichkeiten' ) ) { $topic = 'Seitenverantwortlichkeiten'; }
-            }
-            # Could not determine topic?
-            if ( $topic eq '' ) {
-                $result->{result} = 1;
-                $result->{priority} = $WARN;
-                $result->{solution} = "Could not find responsibilites topic. Find and check manually if it lists only correct topics";
-            } else {
-                # Check topic
-                my ( $tmeta, $tv ) = Foswiki::Func::readTopic( $web, $topic );
-                # check it SOLRSEARCH excludes Discussions etc.
-                unless ( $tv =~ /-topic:\(\*Template OR \*%WORKFLOWSUFFIX% OR \*Form OR NormClassification\*\)/ ) {
-                        $result->{result} = 1;
-                        $result->{priority} = $WARN;
-                        $result->{solution} = "Update [[$web.$topic]] manually to exclude unwanted topics from results";
-                }
-            }
-            return $result;
-        }
-    },
     "general:locales" => {
         name => "Locale directories",
         description => "Directories without System topic in locales dir.",
