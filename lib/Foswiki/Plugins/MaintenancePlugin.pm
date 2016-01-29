@@ -123,12 +123,12 @@ our $checks = {
                 push @actionWebs, 'Main/SitePreferences';
             }
             if (scalar @actionWebs > 0) {
-                $return_text .= "Check following WebPreferences ActionTrackerPlugin settings:" . '<div>' . join( "</div><div>", @actionWebs ) . '</div><br>';
+                $return_text .= "Remove ActionTrackerPlugin settings (i.e. =ACTIONTRACKERPLUGIN_UPDATEAJAX=, =ACTIONTRACKERPLUGIN_TABLEHEADER=) from the following topics, if possible:" . '<div>' . join( "/WebPreferences</div><div>", @actionWebs ) . '</div><br>';
             }
             my @unknowns = _grepRecursiv($Foswiki::cfg{DataDir}, '%ACTION{');
             if (scalar @unknowns > 0) {
                 $result->{result} = 1;
-                $return_text .= "Check files in data directory for =ACTION= Macro:" . '<div>' . join( "</div><div>", @unknowns ) . '</div>';
+                $return_text .= "Remove =ACTION= macro from the following topics/files if possible:" . '<div>' . join( "</div><div>", @unknowns ) . '</div>';
             }
             if (1 == $result->{result}) {
                 $result->{priority} = $WARN;
