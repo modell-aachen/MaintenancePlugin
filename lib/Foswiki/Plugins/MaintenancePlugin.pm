@@ -82,26 +82,35 @@ our $checks = {
             return $result;
         }
     },
-    "actiontrackerplugin:remains" => {
-        name => "Check for Actiontracker remains",
-        description => "Search for Actiontracker remains in all Webs.",
+    "actiontrackerplugin:disableduninstalled" => {
+        name => "ActionTrackerPlugin disabled",
+        description => "Check if ActionTrackerPlugin disabled and uninstalled.",
         check => sub {
             my $result = { result => 0 };
             my $return_text;
-            if ( exists $Foswiki::cfg{Plugins}{ActionTrackerPlugin}{Enabled} ) {
+            if ( exists $Foswiki::cfg{Plugins}{ActionTrackerPlugin}{Enabled}) {
                 $result->{result} = 1;
-                $return_text .= "<div>ActionTracker is installed.</div><br>";
-            }else{
-                if ( -e $Foswiki::cfg{ScriptDir} ."/../lib/Foswiki/Plugins/ActionTrackerPlugin.pm") {
-                    $result->{result} = 1;
-                    $return_text .= "<div>ActionTracker Plugin is on Disk. Delete ActionTrackerPlugin.pm</div><br>";
-                }
+                $result->{priority} = $WARN;
+                $result->{solution} = "ActionTrackerPlugin is enabled. Disable and uninstall ActionTrackerPlugin.";
+            } elsif ( -e $Foswiki::cfg{ScriptDir} ."/../lib/Foswiki/Plugins/ActionTrackerPlugin.pm") {
+                $result->{result} = 1;
+                $result->{priority} = $WARN;
+                $result->{solution} = "ActionTrackerPlugin found. Uninstall ActionTrackerPlugin.";
             }
+            return $result;
+        }
+    },
+    "actiontrackerplugin:remains" => {
+        name => "No ActionTrackerPlugin remains present",
+        description => "Check if ActionTrackerPlugin options are present.",
+        check => sub {
+            my $result = { result => 0 };
+            my $return_text = '';
             my @webs = Foswiki::Func::getListOfWebs("user");
-            my @actionWebs;
-            foreach my $web (@webs) {
+            my @actionWebs = ();
+            for my $web (@webs) {
                 my $tableHeader = Foswiki::Func::getPreferencesValue("ACTIONTRACKERPLUGIN_TABLEHEADER", $web);
-                if ($tableHeader ne ''){
+                if ($tableHeader ne '') {
                     $result->{result} = 1;
                     push @actionWebs, $web;
                 }
@@ -109,19 +118,19 @@ our $checks = {
             # Also check SitePreferences
             my $updateajax = Foswiki::Func::getPreferencesValue("ACTIONTRACKERPLUGIN_UPDATEAJAX");
             my $tableHeader = Foswiki::Func::getPreferencesValue("ACTIONTRACKERPLUGIN_TABLEHEADER");
-            if ($updateajax ne '' || $tableHeader ne ''){
+            if ($updateajax ne '' || $tableHeader ne '') {
                 $result->{result} = 1;
-                push @actionWebs, 'Main (SeitePreferences)';
+                push @actionWebs, 'Main/SitePreferences';
             }
-            if (scalar @actionWebs > 0){
-                $return_text .= "Check WebPreferences from following Webs for Actiontracker settings:" . '<div>' . join( "</div><div>", @actionWebs ) . '</div><br>';
+            if (scalar @actionWebs > 0) {
+                $return_text .= "Check following WebPreferences ActionTrackerPlugin settings:" . '<div>' . join( "</div><div>", @actionWebs ) . '</div><br>';
             }
             my @unknowns = _grepRecursiv($Foswiki::cfg{DataDir}, '%ACTION{');
-            if ( scalar @unknowns > 0 ) {
+            if (scalar @unknowns > 0) {
                 $result->{result} = 1;
-                $return_text .= "Check files in Data-Dir for Action Macro:" . '<div>' . join( "</div><div>", @unknowns ) . '</div>';
+                $return_text .= "Check files in data directory for =ACTION= Macro:" . '<div>' . join( "</div><div>", @unknowns ) . '</div>';
             }
-            if ( 1 == $result->{result} ) {
+            if (1 == $result->{result}) {
                 $result->{priority} = $WARN;
                 $result->{solution} = $return_text;
             }
@@ -227,7 +236,7 @@ our $checks = {
             if ( scalar @unknowns > 0 ) {
                 $result->{result} = 1;
                 $result->{priority} = $WARN;
-                $result->{solution} = "Check files in Data-Dir for USERAUTOCOMPLETE:" . '<div>' . join( "</div><div>", @unknowns ) . '</div>';
+                $result->{solution} = "Check files in data directory for =USERAUTOCOMPLETE=:" . '<div>' . join( "</div><div>", @unknowns ) . '</div>';
             }
             return $result;
         }
