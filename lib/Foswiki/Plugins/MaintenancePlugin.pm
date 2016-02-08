@@ -82,6 +82,61 @@ our $checks = {
             return $result;
         }
     },
+    "actiontrackerplugin:disableduninstalled" => {
+        name => "ActionTrackerPlugin disabled",
+        description => "Check if ActionTrackerPlugin disabled and uninstalled.",
+        check => sub {
+            my $result = { result => 0 };
+            my $return_text;
+            if ( exists $Foswiki::cfg{Plugins}{ActionTrackerPlugin}{Enabled}) {
+                $result->{result} = 1;
+                $result->{priority} = $WARN;
+                $result->{solution} = "ActionTrackerPlugin is enabled. Disable and uninstall ActionTrackerPlugin.";
+            } elsif ( -e $Foswiki::cfg{ScriptDir} ."/../lib/Foswiki/Plugins/ActionTrackerPlugin.pm") {
+                $result->{result} = 1;
+                $result->{priority} = $WARN;
+                $result->{solution} = "ActionTrackerPlugin found. Uninstall ActionTrackerPlugin.";
+            }
+            return $result;
+        }
+    },
+    "actiontrackerplugin:remains" => {
+        name => "No ActionTrackerPlugin remains present",
+        description => "Check if ActionTrackerPlugin options are present.",
+        check => sub {
+            my $result = { result => 0 };
+            my $return_text = '';
+            my @webs = Foswiki::Func::getListOfWebs("user");
+            my @actionWebs = ();
+            for my $web (@webs) {
+                my $tableHeader = Foswiki::Func::getPreferencesValue("ACTIONTRACKERPLUGIN_TABLEHEADER", $web);
+                if ($tableHeader ne '') {
+                    $result->{result} = 1;
+                    push @actionWebs, $web;
+                }
+            }
+            # Also check SitePreferences
+            my $updateajax = Foswiki::Func::getPreferencesValue("ACTIONTRACKERPLUGIN_UPDATEAJAX");
+            my $tableHeader = Foswiki::Func::getPreferencesValue("ACTIONTRACKERPLUGIN_TABLEHEADER");
+            if ($updateajax ne '' || $tableHeader ne '') {
+                $result->{result} = 1;
+                push @actionWebs, 'Main/SitePreferences';
+            }
+            if (scalar @actionWebs > 0) {
+                $return_text .= "Remove ActionTrackerPlugin settings (i.e. =ACTIONTRACKERPLUGIN_UPDATEAJAX=, =ACTIONTRACKERPLUGIN_TABLEHEADER=) from the following topics, if possible:" . '<div>' . join( "/WebPreferences</div><div>", @actionWebs ) . '</div><br>';
+            }
+            my @unknowns = _grepRecursiv($Foswiki::cfg{DataDir}, '%ACTION{');
+            if (scalar @unknowns > 0) {
+                $result->{result} = 1;
+                $return_text .= "Remove =ACTION= macro from the following topics/files if possible:" . '<div>' . join( "</div><div>", @unknowns ) . '</div>';
+            }
+            if (1 == $result->{result}) {
+                $result->{priority} = $WARN;
+                $result->{solution} = $return_text;
+            }
+            return $result;
+        }
+    },
     "general:customnowysiwyg" => {
         name => "Custom web NOWYSIWYG",
         description => "Custom web has NOWYSIWYG preference",
@@ -109,40 +164,6 @@ our $checks = {
                     $result->{result} = 1;
                     $result->{priority} = $ERROR;
                     $result->{solution} = "Update [[Main.GroupViewTemplate]] manually from QwikiContrib";
-            }
-            return $result;
-        }
-    },
-    "processescontentcontrib:responsibilities" => {
-        name => "Responsibilities outdated",
-        description => "Responsibilites topic search is outdated",
-        check => sub {
-            my $result = { result => 0 };
-            # find topic
-            my ($web, $topic) = ( '', '' );
-            if ( Foswiki::Func::webExists( 'Processes' ) ) {
-                $web = 'Processes';
-                if ( Foswiki::Func::topicExists( $web, 'Responsibilities' ) ) { $topic = 'Responsibilities'; }
-                elsif ( Foswiki::Func::topicExists( $web, 'Seitenverantwortlichkeiten' ) ) { $topic = 'Seitenverantwortlichkeiten'; }
-            } elsif ( Foswiki::Func::webExists( 'Prozesse' ) ) {
-                $web = 'Prozesse';
-                if ( Foswiki::Func::topicExists( $web, 'Responsibilities' ) ) { $topic = 'Responsibilities'; }
-                elsif ( Foswiki::Func::topicExists( $web, 'Seitenverantwortlichkeiten' ) ) { $topic = 'Seitenverantwortlichkeiten'; }
-            }
-            # Could not determine topic?
-            if ( $topic eq '' ) {
-                $result->{result} = 1;
-                $result->{priority} = $WARN;
-                $result->{solution} = "Could not find responsibilites topic. Find and check manually if it lists only correct topics";
-            } else {
-                # Check topic
-                my ( $tmeta, $tv ) = Foswiki::Func::readTopic( $web, $topic );
-                # check it SOLRSEARCH excludes Discussions etc.
-                unless ( $tv =~ /-topic:\(\*Template OR \*%WORKFLOWSUFFIX% OR \*Form OR NormClassification\*\)/ ) {
-                        $result->{result} = 1;
-                        $result->{priority} = $WARN;
-                        $result->{solution} = "Update [[$web.$topic]] manually to exclude unwanted topics from results";
-                }
             }
             return $result;
         }
@@ -177,11 +198,11 @@ our $checks = {
         description => "Check if there are any Forms with an USERAUTOCOMPLETE field",
         check => sub {
             my $result = { result => 0 };
-            my @unknowns = _grepRecursiv($Foswiki::cfg{DataDir});
+            my @unknowns = _grepRecursiv($Foswiki::cfg{DataDir}, '%USERAUTOCOMPLETE%');
             if ( scalar @unknowns > 0 ) {
                 $result->{result} = 1;
                 $result->{priority} = $WARN;
-                $result->{solution} = "Check files in Data-Dir for USERAUTOCOMPLETE:" . '<div>' . join( "</div><div>", @unknowns ) . '</div>';
+                $result->{solution} = "Check files in data directory for =USERAUTOCOMPLETE=:" . '<div>' . join( "</div><div>", @unknowns ) . '</div>';
             }
             return $result;
         }
@@ -190,7 +211,7 @@ our $checks = {
 
 ## Helper ##
 sub _grepRecursiv{
-    my ( $dir ) = @_;
+    my ( $dir, $regex ) = @_;
     my @unknowns = ();
     opendir( my $localedh, $dir ) or push(@unknowns, "Could not open dir" );
     if ( scalar @unknowns == 0) {
@@ -200,13 +221,13 @@ sub _grepRecursiv{
             }
             my $abFile = $dir.'/'.$fp;
             if (-f $abFile) {
-                if($abFile !~ /.txt$/){
+                if($abFile !~ /\.txt$/){
                     next;
                 }
                 my $fh;
                 if (open $fh, "<", $abFile) {
                     foreach my $line (<$fh>) {
-                        if ($line =~ /%USERAUTOCOMPLETE%/) {
+                        if ($line =~ /$regex/) {
                             push(@unknowns, $abFile);
                             last;
                         }
@@ -216,11 +237,11 @@ sub _grepRecursiv{
                     push(@unknowns, "Could not read file " );
                 }
             }
-            if (-d $abFile) { 
+            if (-d $abFile) {
                 if($abFile =~ /,pfv$/){
                     next;
                 }
-                my @input = _grepRecursiv($abFile);
+                my @input = _grepRecursiv($abFile, $regex);
                 if(scalar @input >0){
                     push (@unknowns,@input) ;
                 }
