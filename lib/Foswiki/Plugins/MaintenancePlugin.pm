@@ -223,10 +223,10 @@ our $checks = {
     },
     "checktopicsnamefilter" => {
         name => "Check for Topics with NameFilter",
-        description => "Check for Topics with not allowed characters: \/, \(, \), :, ;, >, <, \[, \], &, @, $, ^, ~, ?, `, #, \", %,...",
+        description => "Check for Topics with not allowed characters: \/, \(, \), :, ;, >, <, \[, \], &, @, \$, ^, ~, ?, `, #, \", %,...",
         check => sub {
             my $result = { result => 0 };
-            
+
             # $result->{result} = 1 if "DoofesTopic()" =~ /[\\\s*?~^$@%`"\'&|<:;>\[\]#\x00-\x1f\(\)]/;
             # return $result if $result->{result} == 1; 
             my @unknowns = _findRecursiv($Foswiki::cfg{DataDir}, '/[\\\s*?~^$@%`"\'&|<:;>\[\]#\x00-\x1f\(\)]/');
