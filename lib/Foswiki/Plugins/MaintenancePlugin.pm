@@ -206,10 +206,69 @@ our $checks = {
             }
             return $result;
         }
+    },
+    "namefilterregexp" => {
+        name => "Check for NameFilterRegExp",
+        description => "Check for NameFilterRegExp.",
+        check => sub {
+            my $result = { result => 0 };
+            my $regexp = $Foswiki::cfg{NameFilter};
+            if ($regexp ne '[\\\\\\s*?~^$@%`"\'&|<:;>\\[\\]#\\x00-\\x1f\\(\\)]') {
+                $result->{result} = 1;
+                $result->{priority} = $WARN;
+                $result->{solution} = "Check NameFilter-RegExp";
+            }
+            return $result;
+        }
+    },
+    "checktopicsnamefilter" => {
+        name => "Check for Topics with NameFilter",
+        description => "Check for Topics with not allowed characters: \/, \(, \), :, ;, >, <, \[, \], &, @, \$, ^, ~, ?, `, #, \", %,...",
+        check => sub {
+            my $result = { result => 0 };
+
+            # $result->{result} = 1 if "DoofesTopic()" =~ /[\\\s*?~^$@%`"\'&|<:;>\[\]#\x00-\x1f\(\)]/;
+            # return $result if $result->{result} == 1; 
+            my @unknowns = _findRecursiv($Foswiki::cfg{DataDir}, '/[\\\s*?~^$@%`"\'&|<:;>\[\]#\x00-\x1f\(\)]/');
+            if ( scalar @unknowns > 0 ) {
+                $result->{result} = 1;
+                $result->{priority} = $WARN;
+                $result->{solution} = "Check Topics in data directory for NameFilter:" . '<div>' . join( "</div><div>", @unknowns ) . '</div>';
+            }
+            return $result;
+        }
     }
 };
 
 ## Helper ##
+sub _findRecursiv{
+    my ( $dir, $regex ) = @_;
+    my @unknowns = ();
+    opendir( my $localedh, $dir ) or push(@unknowns, "Could not open dir" );
+    if ( scalar @unknowns == 0) {
+        foreach my $fp (readdir $localedh) {
+            if ($fp eq "." || $fp eq "..") {
+                next;
+            }
+            my $abFile = $dir.'/'.$fp;
+            if (-f $abFile) {
+                if($fp =~ /[\\\s*?~^$@%`"\'&|<:;>\[\]#\x00-\x1f\(\)]/){
+                    push(@unknowns, $abFile);
+                }
+            }
+            if (-d $abFile) {
+                if($abFile =~ /,pfv$/){
+                    next;
+                }
+                my @input = _findRecursiv($abFile, $regex);
+                if(scalar @input >0){
+                    push (@unknowns,@input) ;
+                }
+            }
+        }
+    }
+    return @unknowns;
+}
 sub _grepRecursiv{
     my ( $dir, $regex ) = @_;
     my @unknowns = ();
