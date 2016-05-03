@@ -208,15 +208,16 @@ our $checks = {
         }
     },
     "namefilterregexp" => {
-        name => "Check for NameFilterRegExp",
-        description => "Check for NameFilterRegExp.",
+        name => "Option {NameFilterRegExp} set correctly",
+        description => "Check wether {NameFilterRegExp} contains the most up-to-date version for filtering.",
         check => sub {
             my $result = { result => 0 };
-            my $regexp = $Foswiki::cfg{NameFilter};
-            if ($regexp ne '[\\\\\\s*?~^$@%`"\'&|<:;>\\[\\]#\\x00-\\x1f\\(\\)]') {
+            my $is = $Foswiki::cfg{NameFilter};
+            my $should = '[\\\\\\s*?~^$@%`"\'&|<:;>\\[\\]#\\x00-\\x1f\\(\\)]';
+            if ($is ne $should) {
                 $result->{result} = 1;
                 $result->{priority} = $WARN;
-                $result->{solution} = "Check NameFilter-RegExp";
+                $result->{solution} = "Change Option {NameFilterRegExp} to <br><pre>$should</pre>";
             }
             return $result;
         }
