@@ -425,9 +425,9 @@ sub tagList {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
     # FIXME: Is this safe for non Admins? Maybe change to adminonly
     _collectChecks();
-    my $result = "| *Check* | *Description* |\n";
-    for my $check ( sort keys %$checks ) {
-        $result .= '| ' . $checks->{$check}->{name} . ' | ' . $checks->{$check}->{description}  . " |\n";
+    my $result = "| *Key* | *Check* | *Description* |\n";
+    for my $check ( sort { "\U$a" cmp "\U$b" } keys %$checks ) {
+        $result .= '| ' . $check . ' | ' . $checks->{$check}->{name} . ' | ' . $checks->{$check}->{description}  . " |\n";
     }
     return $result;
 }
