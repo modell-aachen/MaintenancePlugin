@@ -195,7 +195,7 @@ our $checks = {
     },
     "autocomplete" => {
         name => "Grep USERAUTOCOMPLETE",
-        description => "Check if there are any Forms with an USERAUTOCOMPLETE field",
+        description => "Check if there are any Forms with an USERAUTOCOMPLETE field.",
         check => sub {
             my $result = { result => 0 };
             my @unknowns = _grepRecursiv($Foswiki::cfg{DataDir}, '%USERAUTOCOMPLETE%');
