@@ -154,20 +154,6 @@ our $checks = {
             return $result;
         }
     },
-    "general:groupviewtemplate" => {
-        name => "GroupViewTemplate outdated",
-        description => "GroupViewTemplate has redirect and autocomplete",
-        check => sub {
-            my $result = { result => 0 };
-            my ( $gvmeta, $gv ) = Foswiki::Func::readTopic( 'Main', 'GroupViewTemplate' );
-            unless ( ( $gv =~ /USERAUTOCOMPLETE/ ) && ( $gv =~ /redirectto" value="%BASEWEB%\.%BASETOPIC%/ ) ) {
-                    $result->{result} = 1;
-                    $result->{priority} = $ERROR;
-                    $result->{solution} = "Update [[Main.GroupViewTemplate]] manually from QwikiContrib";
-            }
-            return $result;
-        }
-    },
     "general:locales" => {
         name => "Locale directories",
         description => "Directories without System topic in locales dir.",
