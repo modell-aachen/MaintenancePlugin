@@ -194,7 +194,7 @@ our $checks = {
         }
     },
     "namefilterregexp" => {
-        name => "Option {NameFilterRegExp} set correctly",
+        name => "Option {NameFilter} set correctly",
         description => "Check wether {NameFilterRegExp} contains the most up-to-date version for filtering.",
         check => sub {
             my $result = { result => 0 };
@@ -203,7 +203,7 @@ our $checks = {
             if ($is ne $should) {
                 $result->{result} = 1;
                 $result->{priority} = $WARN;
-                $result->{solution} = "Change Option {NameFilterRegExp} to <br><pre>$should</pre>";
+                $result->{solution} = "Change Option {NameFilter} in /bin/configure to <br><pre>$should</pre>";
             }
             return $result;
         }
