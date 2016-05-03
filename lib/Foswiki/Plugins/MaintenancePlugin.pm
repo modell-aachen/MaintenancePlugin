@@ -11,8 +11,8 @@ use Foswiki::Plugins ();
 use File::Spec; # Needed for portable checking of PATH
 
 
-our $VERSION = '0.7';
-our $RELEASE = "0.7";
+our $VERSION = '0.8';
+our $RELEASE = "0.8";
 our $SHORTDESCRIPTION = 'Q.wiki maintenance plugin';
 our $NO_PREFS_IN_TOPIC = 1;
 
@@ -359,6 +359,66 @@ sub registerCheck {
         return 0;
     }
     $checks->{ $name } = $newcheck;
+}
+
+sub registerFileCheck {
+    my ( $name, $file, $correctresource, $goodversions, $badversions, @bad ) = @_;
+    if ( @bad ) {
+        Foswiki::Func::writeWarning( "Wrong number of arguments in " . (caller(0))[3] );
+        return 0;
+    }
+
+    registerCheck($name, {
+        name => "Check $name",
+        description => "Check version of file $file against known checksums.",
+        check => sub {
+            require File::Spec;
+            require Digest::SHA;
+
+            # Check existance
+            unless ( -f $file) {
+                return {
+                    result => 1,
+                    priority => $Foswiki::Plugins::MaintenancePlugin::ERROR,
+                    solution => "Could not find file $file.",
+                }
+            }
+            # Checksum calculation
+            my $fh;
+            unless (open($fh, '<', $file) ) {
+                return {
+                    result => 1,
+                    priority => $Foswiki::Plugins::MaintenancePlugin::ERROR,
+                    solution => "Could not open file $file for reading: $!."
+                }
+            };
+            my $data;
+            binmode($fh);
+            {
+                local $/ = undef;
+                $data = <$fh>;
+            }
+            close($fh);
+
+            my $hash = Digest::SHA::sha256_hex($data);
+            if ($goodversions->{$hash}) {
+                return { result => 0 };
+            } elsif ($badversions->{$hash}) {
+                return {
+                    result => 1,
+                    priority => $Foswiki::Plugins::MaintenancePlugin::ERROR,
+                    solution => "File $file is known as bad. Please update to file \'$correctresource\'."
+                }
+            } else {
+                return {
+                    result => 1,
+                    priority => $Foswiki::Plugins::MaintenancePlugin::WARN,
+                    solution => "File $file is unknown and has checksum \'$hash\'. Please review the file and decide if it is necessary to update this MaintenanceHandler accordingly."
+                }
+            }
+
+        }
+    });
 }
 
 sub tagList {

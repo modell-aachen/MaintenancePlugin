@@ -28,6 +28,7 @@ The MaintenancePlugin looks for a sub =maintenanceHandler= in the namespace of m
    * Module in lib/Foswiki/Contrib that resides in a file matching /Contrib\.pm/.
 
 If available, the sub =maintenanceHandler= will be executed without parameters. This is the recommended place to use the registerCheck API. Use reponsibly.
+It is unnecessary to require =Foswiki::Plugins::MaintenancePlugin=in your plugin, unless you actually require it. MaintenancePlugin guarantees that it is fully initialized before the =maintenanceHandler= is run.
 
 ---+++ registerCheck( $name, $newcheck )
 You can use the registerCheck API to add your own checks to the MaintenancePlugin.
@@ -43,8 +44,6 @@ You can use the registerCheck API to add your own checks to the MaintenancePlugi
             * =$Foswiki::Plugins::MaintenancePlugin::WARNING= - Issue might affect certain components in a negative way.
          * =solution= - mandatory if =result= is not =0=. Text containing information on how to solve the problem.
       * =experimental= - , optional.
-
-It is unnecessary to require =Foswiki::Plugins::MaintenancePlugin=in your plugin, unless you actually require it. MaintenancePlugin guarantees that it is fully initialized before the =maintenanceHandler= is run.
 
 *Example*
 
@@ -67,6 +66,31 @@ sub maintenanceHandler {
 }
 </verbatim>
 
+---+++ registerFileCheck( my ( $name, $file, $correctresource, $goodversions, $badversions )
+You can use the registerFileCheck API to add your own file checksum checks to the MaintenancePlugin.
+If the file checksum matches is in =$goodversions=, everything is fine. If it is in =$badversions=, a prompt for updating will be displayed. If the file is neither in =$goodversions= nor in =$badversions=, a prompt for review will be displayed.
+
+   * =$name= the technical name of the check. Can overwrite existing checks.
+   * =$file= a valid path to the file to be checked. This file will be opened, and its checksum will be calculated.
+   * =correctresource= - An informal locator for a correct resource. Will be displayed to the user.
+   * =goodversions= - A hash containing known good version checksums of the file. These are the only files resulting in no warning displayed.
+   * =badversions= - A hash containing known bad version checksums of the file.
+
+*Example*
+
+<verbatim>
+# MaintenancePlugin integration
+sub maintenanceHandler {
+    Foswiki::Plugins::MaintenancePlugin::registerFileCheck(
+        "SolrPlugin:config:ram",
+        File::Spec->catfile('/', 'var', 'solr', 'solr.in.sh'),
+        'resources/SolrPlugin/solr.in.sh',
+        {"d8aef1acc0e56aaca29de623e1566d7116530929e5434cda8ec927e40dfede38" => 1},
+        {"f6efb9745ee0293119f45550ac40d30d2ee769ddef9fb7609d75c5754a341457" => 1},
+    );
+}
+</verbatim>
+
 ---++ Plugin Info
 
 |  Author: | Maik Glatki |
@@ -75,6 +99,7 @@ sub maintenanceHandler {
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions in reverse order --> |
+|  0.8 | Add new registerFileCheck API. Changed API version to 8. |
 |  0.7 | Error classes are now exported. Changed API version to 7. |
 |  0.6 | Deprecated experimental Maintenance.pm inclusion. Use newly introduced maintenanceHandler instead. Changed API version to 6. |
 |  0.5 | Improved Maintenance.pm inclusion. Changed API version to 5. |
