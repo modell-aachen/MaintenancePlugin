@@ -11,8 +11,8 @@ use Foswiki::Plugins ();
 use File::Spec; # Needed for portable checking of PATH
 
 
-our $VERSION = '0.7';
-our $RELEASE = "0.7";
+our $VERSION = '0.8';
+our $RELEASE = "0.8";
 our $SHORTDESCRIPTION = 'Q.wiki maintenance plugin';
 our $NO_PREFS_IN_TOPIC = 1;
 
@@ -154,20 +154,6 @@ our $checks = {
             return $result;
         }
     },
-    "general:groupviewtemplate" => {
-        name => "GroupViewTemplate outdated",
-        description => "GroupViewTemplate has redirect and autocomplete",
-        check => sub {
-            my $result = { result => 0 };
-            my ( $gvmeta, $gv ) = Foswiki::Func::readTopic( 'Main', 'GroupViewTemplate' );
-            unless ( ( $gv =~ /USERAUTOCOMPLETE/ ) && ( $gv =~ /redirectto" value="%BASEWEB%\.%BASETOPIC%/ ) ) {
-                    $result->{result} = 1;
-                    $result->{priority} = $ERROR;
-                    $result->{solution} = "Update [[Main.GroupViewTemplate]] manually from QwikiContrib";
-            }
-            return $result;
-        }
-    },
     "general:locales" => {
         name => "Locale directories",
         description => "Directories without System topic in locales dir.",
@@ -195,7 +181,7 @@ our $checks = {
     },
     "autocomplete" => {
         name => "Grep USERAUTOCOMPLETE",
-        description => "Check if there are any Forms with an USERAUTOCOMPLETE field",
+        description => "Check if there are any Forms with an USERAUTOCOMPLETE field.",
         check => sub {
             my $result = { result => 0 };
             my @unknowns = _grepRecursiv($Foswiki::cfg{DataDir}, '%USERAUTOCOMPLETE%');
@@ -208,15 +194,16 @@ our $checks = {
         }
     },
     "namefilterregexp" => {
-        name => "Check for NameFilterRegExp",
-        description => "Check for NameFilterRegExp.",
+        name => "Option {NameFilter} set correctly",
+        description => "Check wether {NameFilterRegExp} contains the most up-to-date version for filtering.",
         check => sub {
             my $result = { result => 0 };
-            my $regexp = $Foswiki::cfg{NameFilter};
-            if ($regexp ne '[\\\\\\s*?~^$@%`"\'&|<:;>\\[\\]#\\x00-\\x1f\\(\\)]') {
+            my $is = $Foswiki::cfg{NameFilter};
+            my $should = '[\\\\\\s*?~^$@%`"\'&|<:;>\\[\\]#\\x00-\\x1f\\(\\)]';
+            if ($is ne $should) {
                 $result->{result} = 1;
                 $result->{priority} = $WARN;
-                $result->{solution} = "Check NameFilter-RegExp";
+                $result->{solution} = "Change Option {NameFilter} in /bin/configure to <br><pre>$should</pre>";
             }
             return $result;
         }
@@ -374,13 +361,73 @@ sub registerCheck {
     $checks->{ $name } = $newcheck;
 }
 
+sub registerFileCheck {
+    my ( $name, $file, $correctresource, $goodversions, $badversions, @bad ) = @_;
+    if ( @bad ) {
+        Foswiki::Func::writeWarning( "Wrong number of arguments in " . (caller(0))[3] );
+        return 0;
+    }
+
+    registerCheck($name, {
+        name => "Check $name",
+        description => "Check version of file $file against known checksums.",
+        check => sub {
+            require File::Spec;
+            require Digest::SHA;
+
+            # Check existance
+            unless ( -f $file) {
+                return {
+                    result => 1,
+                    priority => $Foswiki::Plugins::MaintenancePlugin::ERROR,
+                    solution => "Could not find file $file.",
+                }
+            }
+            # Checksum calculation
+            my $fh;
+            unless (open($fh, '<', $file) ) {
+                return {
+                    result => 1,
+                    priority => $Foswiki::Plugins::MaintenancePlugin::ERROR,
+                    solution => "Could not open file $file for reading: $!."
+                }
+            };
+            my $data;
+            binmode($fh);
+            {
+                local $/ = undef;
+                $data = <$fh>;
+            }
+            close($fh);
+
+            my $hash = Digest::SHA::sha256_hex($data);
+            if ($goodversions->{$hash}) {
+                return { result => 0 };
+            } elsif ($badversions->{$hash}) {
+                return {
+                    result => 1,
+                    priority => $Foswiki::Plugins::MaintenancePlugin::ERROR,
+                    solution => "File $file is known as bad. Please update to file \'$correctresource\'."
+                }
+            } else {
+                return {
+                    result => 1,
+                    priority => $Foswiki::Plugins::MaintenancePlugin::WARN,
+                    solution => "File $file is unknown and has checksum \'$hash\'. Please review the file and decide if it is necessary to update this MaintenanceHandler accordingly."
+                }
+            }
+
+        }
+    });
+}
+
 sub tagList {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
     # FIXME: Is this safe for non Admins? Maybe change to adminonly
     _collectChecks();
-    my $result = "| *Check* | *Description* |\n";
-    for my $check ( sort keys %$checks ) {
-        $result .= '| ' . $checks->{$check}->{name} . ' | ' . $checks->{$check}->{description}  . " |\n";
+    my $result = "| *Key* | *Check* | *Description* |\n";
+    for my $check ( sort { "\U$a" cmp "\U$b" } keys %$checks ) {
+        $result .= '| ' . $check . ' | ' . $checks->{$check}->{name} . ' | ' . $checks->{$check}->{description}  . " |\n";
     }
     return $result;
 }
