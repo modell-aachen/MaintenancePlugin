@@ -511,7 +511,7 @@ sub maintenanceHandler {
         description => "Installed Foswiki release is not newest supported stable version.",
         check => sub {
             my $result = { result => 0 };
-            my $last = 'Foswiki-2.1.0';
+            my $last = 'Foswiki-2.1.2';
             if ( $Foswiki::RELEASE ne $last ) {
                 $result->{result} = 1;
                 $result->{priority} = $WARN;
