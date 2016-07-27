@@ -380,7 +380,7 @@ sub registerFileCheck {
                 return {
                     result => 1,
                     priority => $Foswiki::Plugins::MaintenancePlugin::ERROR,
-                    solution => "Could not find file $file.",
+                    solution => "File =$file= does not exist or not a file.",
                 }
             }
             # Checksum calculation
@@ -389,7 +389,7 @@ sub registerFileCheck {
                 return {
                     result => 1,
                     priority => $Foswiki::Plugins::MaintenancePlugin::ERROR,
-                    solution => "Could not open file $file for reading: $!."
+                    solution => "Could not open file =$file= for reading: $!."
                 }
             };
             my $data;
@@ -407,13 +407,13 @@ sub registerFileCheck {
                 return {
                     result => 1,
                     priority => $Foswiki::Plugins::MaintenancePlugin::ERROR,
-                    solution => "File $file is known as bad. Please update to file \'$correctresource\'."
+                    solution => "File =$file= is known as bad. Please update to file =$correctresource=."
                 }
             } else {
                 return {
                     result => 1,
                     priority => $Foswiki::Plugins::MaintenancePlugin::WARN,
-                    solution => "File $file is unknown and has checksum \'$hash\'. Please review the file and decide if it is necessary to update this MaintenanceHandler accordingly."
+                    solution => "File =$file= is unknown and has checksum =$hash=. Please review the file and decide if it is necessary to update this MaintenanceHandler accordingly."
                 }
             }
 
