@@ -110,7 +110,7 @@ our $checks = {
             my @actionWebs = ();
             for my $web (@webs) {
                 my $tableHeader = Foswiki::Func::getPreferencesValue("ACTIONTRACKERPLUGIN_TABLEHEADER", $web);
-                if ($tableHeader ne '') {
+                if ($tableHeader && $tableHeader ne '') {
                     $result->{result} = 1;
                     push @actionWebs, $web;
                 }
