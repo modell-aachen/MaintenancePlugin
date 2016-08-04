@@ -199,7 +199,7 @@ our $checks = {
         check => sub {
             my $result = { result => 0 };
             my $is = $Foswiki::cfg{NameFilter};
-            my $should = '[\\\\\\s*?~^$@%`"\'&|<:;>\\[\\]#\\x00-\\x1f\\(\\)]';
+            my $should = '[\\\\\\s*?~^$@%`"\'&|<:;,>\\[\\]#\\x00-\\x1f\\(\\)]';
             if ($is ne $should) {
                 $result->{result} = 1;
                 $result->{priority} = $WARN;
@@ -210,13 +210,13 @@ our $checks = {
     },
     "checktopicsnamefilter" => {
         name => "Check for Topics with NameFilter",
-        description => "Check for Topics with not allowed characters: \/, \(, \), :, ;, >, <, \[, \], &, @, \$, ^, ~, ?, `, #, \", %,...",
+        description => "Check for Topics with not allowed characters: \/, \(, \), :, ;, ,, >, <, \[, \], &, @, \$, ^, ~, ?, `, #, \", %,...",
         check => sub {
             my $result = { result => 0 };
 
             # $result->{result} = 1 if "DoofesTopic()" =~ /[\\\s*?~^$@%`"\'&|<:;>\[\]#\x00-\x1f\(\)]/;
             # return $result if $result->{result} == 1; 
-            my @unknowns = _findRecursiv($Foswiki::cfg{DataDir}, '/[\\\s*?~^$@%`"\'&|<:;>\[\]#\x00-\x1f\(\)]/');
+            my @unknowns = _findRecursiv($Foswiki::cfg{DataDir}, '/[\\\s*?~^$@%`"\'&|<:;,>\[\]#\x00-\x1f\(\)]/');
             if ( scalar @unknowns > 0 ) {
                 $result->{result} = 1;
                 $result->{priority} = $WARN;
