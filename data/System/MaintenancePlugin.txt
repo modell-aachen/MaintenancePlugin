@@ -94,7 +94,7 @@ sub maintenanceHandler {
 ---++ Plugin Info
 
 |  Author: | Maik Glatki |
-|  Copyright: | &copy; 2015, Modell Aachen GmbH |
+|  Copyright: | &copy; 2015-2016, Maik Glatki <glatki@modell-aachen.de>, Modell Aachen GmbH |
 |  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |

@@ -110,7 +110,7 @@ our $checks = {
             my @actionWebs = ();
             for my $web (@webs) {
                 my $tableHeader = Foswiki::Func::getPreferencesValue("ACTIONTRACKERPLUGIN_TABLEHEADER", $web);
-                if ($tableHeader ne '') {
+                if ($tableHeader && $tableHeader ne '') {
                     $result->{result} = 1;
                     push @actionWebs, $web;
                 }
@@ -199,7 +199,7 @@ our $checks = {
         check => sub {
             my $result = { result => 0 };
             my $is = $Foswiki::cfg{NameFilter};
-            my $should = '[\\\\\\s*?~^$@%`"\'&|<:;>\\[\\]#\\x00-\\x1f\\(\\)]';
+            my $should = '[\\\\\\s*?~^$@%`"\'&|<:;,>\\[\\]#\\x00-\\x1f\\(\\)]';
             if ($is ne $should) {
                 $result->{result} = 1;
                 $result->{priority} = $WARN;
@@ -210,13 +210,13 @@ our $checks = {
     },
     "checktopicsnamefilter" => {
         name => "Check for Topics with NameFilter",
-        description => "Check for Topics with not allowed characters: \/, \(, \), :, ;, >, <, \[, \], &, @, \$, ^, ~, ?, `, #, \", %,...",
+        description => "Check for Topics with not allowed characters: \/, \(, \), :, ;, ,, >, <, \[, \], &, @, \$, ^, ~, ?, `, #, \", %,...",
         check => sub {
             my $result = { result => 0 };
 
             # $result->{result} = 1 if "DoofesTopic()" =~ /[\\\s*?~^$@%`"\'&|<:;>\[\]#\x00-\x1f\(\)]/;
             # return $result if $result->{result} == 1; 
-            my @unknowns = _findRecursiv($Foswiki::cfg{DataDir}, '/[\\\s*?~^$@%`"\'&|<:;>\[\]#\x00-\x1f\(\)]/');
+            my @unknowns = _findRecursiv($Foswiki::cfg{DataDir}, '/[\\\s*?~^$@%`"\'&|<:;,>\[\]#\x00-\x1f\(\)]/');
             if ( scalar @unknowns > 0 ) {
                 $result->{result} = 1;
                 $result->{priority} = $WARN;
@@ -380,7 +380,7 @@ sub registerFileCheck {
                 return {
                     result => 1,
                     priority => $Foswiki::Plugins::MaintenancePlugin::ERROR,
-                    solution => "Could not find file $file.",
+                    solution => "File =$file= does not exist or not a file.",
                 }
             }
             # Checksum calculation
@@ -389,7 +389,7 @@ sub registerFileCheck {
                 return {
                     result => 1,
                     priority => $Foswiki::Plugins::MaintenancePlugin::ERROR,
-                    solution => "Could not open file $file for reading: $!."
+                    solution => "Could not open file =$file= for reading: $!."
                 }
             };
             my $data;
@@ -407,13 +407,13 @@ sub registerFileCheck {
                 return {
                     result => 1,
                     priority => $Foswiki::Plugins::MaintenancePlugin::ERROR,
-                    solution => "File $file is known as bad. Please update to file \'$correctresource\'."
+                    solution => "File =$file= is known as bad. Please update to file =$correctresource=."
                 }
             } else {
                 return {
                     result => 1,
                     priority => $Foswiki::Plugins::MaintenancePlugin::WARN,
-                    solution => "File $file is unknown and has checksum \'$hash\'. Please review the file and decide if it is necessary to update this MaintenanceHandler accordingly."
+                    solution => "File =$file= is unknown and has checksum =$hash=. Please review the file and decide if it is necessary to update this MaintenanceHandler accordingly."
                 }
             }
 
@@ -511,7 +511,7 @@ sub maintenanceHandler {
         description => "Installed Foswiki release is not newest supported stable version.",
         check => sub {
             my $result = { result => 0 };
-            my $last = 'Foswiki-2.1.0';
+            my $last = 'Foswiki-2.1.2';
             if ( $Foswiki::RELEASE ne $last ) {
                 $result->{result} = 1;
                 $result->{priority} = $WARN;
