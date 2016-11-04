@@ -224,6 +224,21 @@ our $checks = {
             }
             return $result;
         }
+    },
+    "attachmentnamefilterregexp" => {
+        name => "Option {AttachmentNameFilter} set correctly",
+        description => "Check wether {AttachmentNameFilterRegExp} contains the most up-to-date version for filtering.",
+        check => sub {
+            my $result = { result => 0 };
+            my $is = $Foswiki::cfg{AttachmentNameFilter};
+            my $should = '[\\\\*?~^$;@%`"\'&|<>/\\[\\]()#\\x00-\\x1f]';
+            if ($is ne $should) {
+                $result->{result} = 1;
+                $result->{priority} = $WARN;
+                $result->{solution} = "Change Option {AttachmentNameFilter} in /bin/configure to <br><pre>$should</pre>";
+            }
+            return $result;
+        }
     }
 };
 
