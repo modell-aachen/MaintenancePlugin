@@ -9,7 +9,7 @@ use Foswiki::Plugins ();
 
 # Core modules
 use File::Spec; # Needed for portable checking of PATH
-
+use Net::Ping;
 
 our $VERSION = '0.8';
 our $RELEASE = "0.8";
@@ -22,6 +22,21 @@ our $ERROR = 1;
 our $WARN = 2;
 
 our $checks = {
+    "net:connectivity" => {
+        name => "Network Connectivity",
+        description => "Check whether updates.modell-aachen.de is reachable",
+        check => sub {
+            my $result = { result => 0 };
+            my $p = Net::Ping->new;
+            unless ($p->ping('updates.modell-aachen.de', 3)) {
+              $result->{result} = 1;
+              $result->{priority} = $ERROR;
+              $result->{solution} = 'Host "updates.modell-aachen.de" is unreachable. Check your network connection. Maybe you have to set "$Foswiki::cfg{PROXY}{HOST}"';
+            }
+
+            return $result;
+        }
+    },
     "kvp:talk" => {
         name => "KVP Talk Suffix",
         description => "Check if KVPPlugin suffix is \"Talk\"",
