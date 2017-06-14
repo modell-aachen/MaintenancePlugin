@@ -246,7 +246,7 @@ our $checks = {
         check => sub {
             my $result = { result => 0 };
             my $is = $Foswiki::cfg{AttachmentNameFilter};
-            my $should = '[\\\\*?~^$;@%`"\'&|<>/\\[\\]()#\\x00-\\x1f]';
+            my $should = '[\\\\*?~^$;@%`"\'&|<>/\\[\\]()#\\x00-\\x1f]|\\s+$';
             if ($is ne $should) {
                 $result->{result} = 1;
                 $result->{priority} = $WARN;
