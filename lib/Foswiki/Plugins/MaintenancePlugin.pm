@@ -229,9 +229,7 @@ our $checks = {
         check => sub {
             my $result = { result => 0 };
 
-            # $result->{result} = 1 if "DoofesTopic()" =~ /[\\\s*?~^$@%`"\'&|<:;>\[\]#\x00-\x1f\(\)]/;
-            # return $result if $result->{result} == 1; 
-            my @unknowns = _findRecursiv($Foswiki::cfg{DataDir}, '/[\\\s*?~^$@%`"\'&|<:;,>\[\]#\x00-\x1f\(\)]/');
+            my @unknowns = findFileRecursiv($Foswiki::cfg{DataDir}, qr/[\\\s*?~^\$@%`"\'&|<:;>\[\]#\x00-\x1f\(\)]/);#'/[\\\s*?~^$@%`"\'&|<:;,>\[\]#\x00-\x1f\(\)]/');
             if ( scalar @unknowns > 0 ) {
                 $result->{result} = 1;
                 $result->{priority} = $WARN;
@@ -258,18 +256,20 @@ our $checks = {
 };
 
 ## Helper ##
-sub _findRecursiv{
+# find file recursiv in directory
+# does not search in history, trash or '_' folders
+sub findFileRecursiv{
     my ( $dir, $regex ) = @_;
     my @unknowns = ();
     opendir( my $localedh, $dir ) or push(@unknowns, "Could not open dir" );
     if ( scalar @unknowns == 0) {
         foreach my $fp (readdir $localedh) {
-            if ($fp eq "." || $fp eq "..") {
+            if ($fp eq "." || $fp eq ".." || $fp =~ /^Trash$/ || $fp =~ /^_/) {
                 next;
             }
             my $abFile = $dir.'/'.$fp;
             if (-f $abFile) {
-                if($fp =~ /[\\\s*?~^$@%`"\'&|<:;>\[\]#\x00-\x1f\(\)]/){
+                if($fp =~ $regex){
                     push(@unknowns, $abFile);
                 }
             }
@@ -277,7 +277,7 @@ sub _findRecursiv{
                 if($abFile =~ /,pfv$/){
                     next;
                 }
-                my @input = _findRecursiv($abFile, $regex);
+                my @input = findFileRecursiv($abFile, $regex);
                 if(scalar @input >0){
                     push (@unknowns,@input) ;
                 }
