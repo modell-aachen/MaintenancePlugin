@@ -252,6 +252,19 @@ our $checks = {
             }
             return $result;
         }
+    },
+    "smiliesplugin:disabled" => {
+        name => "SmiliesPlugin disabled",
+        description => "Check if SmiliesPlugin is disabled.",
+        check => sub {
+            my $result = { result => 0 };
+            if ( exists $Foswiki::cfg{Plugins}{SmiliesPlugin}{Enabled} && $Foswiki::cfg{Plugins}{SmiliesPlugin}{Enabled} == 1) {
+                $result->{result} = 1;
+                $result->{priority} = $WARN;
+                $result->{solution} = "SmiliesPlugin is enabled. Disable SmiliesPlugin.";
+            }
+            return $result;
+        }
     }
 };
 
