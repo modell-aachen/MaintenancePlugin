@@ -13,6 +13,7 @@ Lists registered checks.
 
 If user is admin user and mpcheck=1, check for maintenance problems and list them as a table. %BUTTON{"Check now!" href="%SCRIPTURLPATH{"view"}%/%WEB%.%TOPIC%?mpcheck=1"}%
 
+%ADDTOZONE{"script" id="MaintenancePlugin::check" requires="JQUERYPLUGIN" text="<script type='text/javascript' src='%PUBURLPATH%/%SYSTEMWEB%/MaintenancePlugin/check.js'></script>"}%
 %MP_CHECK%
 
 ---++  Restrictions / Known Bugs
