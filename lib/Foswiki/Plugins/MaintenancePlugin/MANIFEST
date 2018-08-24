@@ -1,3 +1,4 @@
 !noci
 data/System/MaintenancePlugin.txt 0644
 lib/Foswiki/Plugins/MaintenancePlugin.pm 0444
+pub/System/MaintenancePlugin/check.js 0644

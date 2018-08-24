@@ -13,6 +13,7 @@ Lists registered checks.
 
 If user is admin user and mpcheck=1, check for maintenance problems and list them as a table. %BUTTON{"Check now!" href="%SCRIPTURLPATH{"view"}%/%WEB%.%TOPIC%?mpcheck=1"}%
 
+%ADDTOZONE{"script" id="MaintenancePlugin::check" requires="JQUERYPLUGIN" text="<script type='text/javascript' src='%PUBURLPATH%/%SYSTEMWEB%/MaintenancePlugin/check.js'></script>"}%
 %MP_CHECK%
 
 ---++  Restrictions / Known Bugs
@@ -41,7 +42,7 @@ You can use the registerCheck API to add your own checks to the MaintenancePlugi
          * =priority= - mandatory if =result= is not =0=. Defines the severity of the found error.
             * =$Foswiki::Plugins::MaintenancePlugin::CRITICAL= - Issue needs to be fixed now, or will possibly prevent wiki from functioning correctly.
             * =$Foswiki::Plugins::MaintenancePlugin::ERROR= - Issue should be fixed, or might prevent components from working.
-            * =$Foswiki::Plugins::MaintenancePlugin::WARNING= - Issue might affect certain components in a negative way.
+            * =$Foswiki::Plugins::MaintenancePlugin::WARN= - Issue might affect certain components in a negative way.
          * =solution= - mandatory if =result= is not =0=. Text containing information on how to solve the problem.
       * =experimental= - , optional.
 
