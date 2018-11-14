@@ -22,21 +22,6 @@ our $ERROR = 1;
 our $WARN = 2;
 
 our $checks = {
-    "net:connectivity" => {
-        name => "Network Connectivity",
-        description => "Check whether updates.modell-aachen.de is reachable",
-        check => sub {
-            my $result = { result => 0 };
-            my $p = Net::Ping->new;
-            unless ($p->ping('updates.modell-aachen.de', 3)) {
-              $result->{result} = 1;
-              $result->{priority} = $ERROR;
-              $result->{solution} = 'Host "updates.modell-aachen.de" is unreachable. Check your network connection. Maybe you have to set "$Foswiki::cfg{PROXY}{HOST}"';
-            }
-
-            return $result;
-        }
-    },
     "kvp:talk" => {
         name => "KVP Talk Suffix",
         description => "Check if KVPPlugin suffix is \"Talk\"",
