@@ -1,24 +1,24 @@
 %META:TOPICPARENT{name="Plugins"}%
 ---+ MaintenancePlugin
 
+%TOC%
 Q.wiki maintenance plugin.
-
----++ MP_LIST
-
-Lists registered checks.
-
-%MP_LIST%
 
 ---++ MP_CHECK
 
-If user is admin user and mpcheck=1, check for maintenance problems and list them as a table. %BUTTON{"Check now!" href="%SCRIPTURLPATH{"view"}%/%WEB%.%TOPIC%?mpcheck=1"}%
+If user is admin user and mpcheck=1, check for maintenance problems and list them as a table. %BUTTON{"Check now!" class="adminOnly" href="%SCRIPTURLPATH{"view"}%/%WEB%.%TOPIC%?mpcheck=1"}%
 
 %ADDTOZONE{"script" id="MaintenancePlugin::check" requires="JQUERYPLUGIN" text="<script type='text/javascript' src='%PUBURLPATH%/%SYSTEMWEB%/MaintenancePlugin/check.js'></script>"}%
 %MP_CHECK%
 
 ---++  Restrictions / Known Bugs
 
-   * The file permission check is experimental. If it runs into files containing characters not in the locale-defined \w, such as german umlauts, the resulting search with File::Find will taint the result, which will cause the check to fail. Since we can not really change File::Grep's unicode settings, we suggest moving using the rename functionality to rename the page and change all incoming links. Will be automated soonish. Sorry.%BR%%BUTTON{"Check excluding experimental checks" href="%SCRIPTURLPATH{"view"}%/%WEB%.%TOPIC%?mpcheck=safe"}%
+   * The file permission check is experimental. If it runs into files containing characters not in the locale-defined \w, such as german umlauts, the resulting search with File::Find will taint the result, which will cause the check to fail. Since we can not really change File::Grep's unicode settings, we suggest moving using the rename functionality to rename the page and change all incoming links. Will be automated soonish. Sorry.%BR%%BUTTON{"Check excluding experimental checks" class="adminOnly" href="%SCRIPTURLPATH{"view"}%/%WEB%.%TOPIC%?mpcheck=safe"}%
+---++ MP_LIST
+
+Lists registered checks.
+
+%MP_LIST%
 
 ---++ API version 8
 
