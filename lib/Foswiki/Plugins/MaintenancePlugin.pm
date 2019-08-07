@@ -534,8 +534,24 @@ sub maintenanceHandler {
         },
         experimental => 1
     });
-}
 
+    Foswiki::Plugins::MaintenancePlugin::registerCheck("general:noteslinkprotocol", {
+        name => "Notes Link-Protocol Pattern",
+        description => "Check if the _{LinkProtocolPattern}_ Setting has notes",
+        check => sub {
+            if($Foswiki::cfg{LinkProtocolPattern} =~ /\bnotes\b/) {
+                return { result => 0 };
+            } else {
+                return {
+                    result => 1,
+                    priority => $Foswiki::Plugins::MaintenancePlugin::WARN,
+                    solution => "Add notes to expert configuration _{LinkProtocolPattern}_ (Show expert options, Miscellaneous / Rendering control / Link-Protocol Pattern) in bin/configure",
+                };
+            }
+        }
+    });
+
+}
 1;
 
 __END__
